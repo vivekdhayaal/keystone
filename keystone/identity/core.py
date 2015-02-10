@@ -63,6 +63,11 @@ def filter_user(user_ref):
             user_ref['extra'].pop('tenants', None)
         except KeyError:
             pass
+        enabled = user_ref.pop('enabled', None)
+        if enabled == '1':
+            user_ref['enabled'] = True
+        elif enabled == '0':
+            user_ref['enabled'] = False
     return user_ref
 
 
@@ -644,7 +649,6 @@ class Manager(manager.Manager):
                           user['enabled'] != old_user_ref.get('enabled'))
         if enabled_change or user.get('password') is not None:
             self.emit_invalidate_user_token_persistence(user_id)
-
         return self._set_domain_id_and_mapping(
             ref, domain_id, driver, mapping.EntityType.USER)
 
