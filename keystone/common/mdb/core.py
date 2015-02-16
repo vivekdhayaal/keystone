@@ -86,16 +86,21 @@ def union_dicts(old_dict, new_dict):
         else:
             union[key] = old_dict[key]
 
-def build_update_req(keys, table_schema, new_dict, old_dict):
+def build_update_req(keys, table_schema, new_dict, old_dict, key_values=None,
+        action=None):
     body = {}
     body['key'] = {}
-    for key in keys:
-        body['key'][key] = {table_schema[key] : old_dict[key]}
+    if key_values is None:
+        for key in keys:
+            body['key'][key] = {table_schema[key] : old_dict[key]}
+    else:
+        for k, v in zip(keys, key_values):
+            body['key'][k] = {table_schema[k]: v}
     changed_attrs = diff_dicts(new_dict, old_dict)
     body['attribute_updates'] = {}
     for key, value in changed_attrs.iteritems():
         body['attribute_updates'][key] = {'value': {table_schema[key]: value}}
-        body['attribute_updates'][key]['action'] = 'PUT'
+        body['attribute_updates'][key]['action'] = action.get(key, 'PUT')
     return body
 
 def build_delete_req(keys, values, table_schema):
