@@ -43,8 +43,8 @@ class Credential(credential.Driver):
     def create_credential(self, credential_id, credential):
         put_cred_json = build_create_req(credential, CREDENTIAL_SCHEMA)
         for table_name, keys in CREDENTIAL_TABLE.iteritems():
-            put_cred_json = append_if_not_exists(put_cred_json,\
-                    keys['hash_key'])
+            put_cred_json = append_expected_for_attr(put_cred_json,\
+                    keys['hash_key'], False)
             MDB.put_item(table_name, put_cred_json)
         return credential
 
@@ -87,10 +87,16 @@ class Credential(credential.Driver):
 
         req = build_update_req(CREDENTIAL_TABLE['credential'].values(),
                 CREDENTIAL_SCHEMA, new_cred, old_cred)
-        req = append_return_values(req, 'ALL_NEW')
+        #req = append_return_values(req, 'ALL_NEW')
         res = MDB.update_item('credential', req)
 
-        return strip_types_unicode(res['attributes'])
+        #return strip_types_unicode(res['attributes'])
+        # magnetoDB bug #1423058 
+        # update_item doesn't return the updated value
+        ret_val = old_cred.copy()
+        for key in new_cred:
+            ret_val[key] = new_cred[key]
+        return ret_val
 
     def delete_credential(self, credential_id):
         req = build_delete_req([CREDENTIAL_TABLE['credential']['hash_key']],

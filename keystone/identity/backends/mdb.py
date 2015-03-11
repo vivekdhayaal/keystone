@@ -79,8 +79,8 @@ class Identity(identity.Driver):
         user = utils.hash_user_password(user)
         put_user_json = build_create_req(user, USER_SCHEMA)
         for table_name, keys in USER_TABLE.iteritems():
-            put_user_json = append_if_not_exists(put_user_json,\
-                    keys['hash_key'])
+            put_user_json = append_exists(put_user_json,\
+                    keys['hash_key'], False)
             MDB.put_item(table_name, put_user_json)
         return identity.filter_user(user)
 
