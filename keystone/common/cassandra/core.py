@@ -19,7 +19,7 @@ To create keyspace by name keystone:
     from cqlengine.management import create_keyspace
     create_keyspace("keystone", "SimpleStrategy", 1)
 """
-from cqlengine.models import Model, ModelMetaClass
+from cassandra.cqlengine.models import Model, ModelMetaClass
 
 import functools
 import json
