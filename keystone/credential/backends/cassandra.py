@@ -16,11 +16,11 @@ from keystone.common import cassandra
 from keystone import credential
 from keystone import exception
 
-from cqlengine import columns
-from cqlengine import connection
-from cqlengine import BatchQuery
-from cqlengine.management import sync_table
-from cqlengine.query import BatchType
+from cassandra.cqlengine import columns
+from cassandra.cqlengine import connection
+from cassandra.cqlengine import BatchQuery
+from cassandra.cqlengine.management import sync_table
+from cassandra.cqlengine.query import BatchType
 
 class CredentialModel(cassandra.ExtrasModel):
     id = columns.Text(primary_key=True, max_length=64)

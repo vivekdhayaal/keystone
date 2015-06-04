@@ -22,11 +22,11 @@ from keystone import config
 from keystone.i18n import _
 from keystone.openstack.common import log
 
-from cqlengine import columns
-from cqlengine import connection
-from cqlengine import BatchQuery
-from cqlengine.management import sync_table
-from cqlengine.query import BatchType, DoesNotExist
+from cassandra.cqlengine import columns
+from cassandra.cqlengine import connection
+from cassandra.cqlengine import BatchQuery
+from cassandra.cqlengine.management import sync_table
+from cassandra.cqlengine.query import BatchType, DoesNotExist
 
 
 CONF = config.CONF
