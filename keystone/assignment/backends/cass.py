@@ -12,15 +12,14 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from oslo_config import cfg
+from oslo_log import log
 import six
 
 from keystone import assignment as keystone_assignment
-from keystone.common import cassandra
+from keystone.common import cass
 from keystone import exception
-
-from keystone import config
 from keystone.i18n import _
-from keystone.openstack.common import log
 
 from cassandra.cqlengine import columns
 from cassandra.cqlengine import connection
@@ -29,7 +28,7 @@ from cassandra.cqlengine.management import sync_table
 from cassandra.cqlengine.query import BatchType, DoesNotExist
 
 
-CONF = config.CONF
+CONF = cfg.CONF
 LOG = log.getLogger(__name__)
 
 
@@ -420,7 +419,7 @@ class Assignment(keystone_assignment.Driver):
             for ref in refs:
                 ref.delete()
 
-class RoleAssignment(cassandra.ExtrasModel):
+class RoleAssignment(cass.ExtrasModel):
     __tablename__ = 'assignment'
     type = columns.Text(primary_key=True, partition_key=True, max_length=64)
     actor_id = columns.Text(primary_key=True, partition_key=True, max_length=64)
@@ -428,5 +427,5 @@ class RoleAssignment(cassandra.ExtrasModel):
     role_id = columns.Text(primary_key=True, index=True, max_length=64)
     inherited = columns.Boolean(default=False, required=True, index=True)
 
-connection.setup(cassandra.ips, cassandra.keyspace)
+connection.setup(cass.ips, cass.keyspace)
 sync_table(RoleAssignment)

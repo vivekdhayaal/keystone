@@ -12,7 +12,9 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from keystone.common import cassandra
+from oslo_config import cfg
+
+from keystone.common import cass
 from keystone import exception
 from keystone import identity
 from keystone.common import utils
@@ -24,10 +26,10 @@ from cassandra.cqlengine.management import sync_table
 from cassandra.cqlengine.models import Model
 from cassandra.cqlengine.query import BatchType, DoesNotExist
 
-# CONF = cfg.CONF
+CONF = cfg.CONF
 
 
-class User(cassandra.ExtrasModel):
+class User(cass.ExtrasModel):
     __table_name__ = 'user'
     id = columns.Text(primary_key=True, max_length=64)
     name = columns.Text(max_length=255)
@@ -37,13 +39,13 @@ class User(cassandra.ExtrasModel):
     extra = columns.Text()
     default_project_id = columns.Text(max_length=64)
 
-class DomainIdUserNameToUserId(cassandra.ExtrasModel):
+class DomainIdUserNameToUserId(cass.ExtrasModel):
     __table_name__ = 'domain_id_user_name_to_user_id'
     domain_id = columns.Text(primary_key=True, max_length=64)
     name = columns.Text(primary_key=True, max_length=255)
     user_id = columns.Text(max_length=64)
 
-class Group(cassandra.ExtrasModel):
+class Group(cass.ExtrasModel):
     __table_name__ = 'group'
     id = columns.Text(primary_key=True, max_length=64)
     name = columns.Text(max_length=64)
@@ -51,23 +53,23 @@ class Group(cassandra.ExtrasModel):
     description = columns.Text()
     extra = columns.Text()
 
-class DomainIdGroupNameToGroupId(cassandra.ExtrasModel):
+class DomainIdGroupNameToGroupId(cass.ExtrasModel):
     __table_name__ = 'domain_id_group_name_to_group_id'
     domain_id = columns.Text(primary_key=True, max_length=64)
     name = columns.Text(primary_key=True, max_length=64)
     group_id = columns.Text(max_length=64)
 
-class UserGroups(cassandra.ExtrasModel):
+class UserGroups(cass.ExtrasModel):
     __table_name__ = 'user_groups'
     user_id = columns.Text(primary_key=True, max_length=64)
     group_id = columns.Text(primary_key=True, clustering_order="DESC", max_length=64)
 
-class GroupMembership(cassandra.ExtrasModel):
+class GroupMembership(cass.ExtrasModel):
     __table_name__ = 'group_users'
     group_id = columns.Text(primary_key=True, max_length=64)
     user_id = columns.Text(primary_key=True, clustering_order="DESC", max_length=64)
 
-connection.setup(cassandra.ips, cassandra.keyspace)
+connection.setup(cass.ips, cass.keyspace)
 
 sync_table(User)
 sync_table(DomainIdUserNameToUserId)
@@ -127,7 +129,7 @@ class Identity(identity.Driver):
         return identity.filter_user(user_dict)
 
 
-    @cassandra.truncated
+    @cass.truncated
     def list_users(self, hints):
         # @TODO: use the hints!
         user_refs = User.objects.all()
@@ -285,7 +287,7 @@ class Identity(identity.Driver):
 
         return ref.to_dict()
 
-    @cassandra.truncated
+    @cass.truncated
     def list_groups(self, hints):
         # TODO(rushiagr): use the hints!
         refs = Group.objects.all()
