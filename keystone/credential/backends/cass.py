@@ -11,18 +11,18 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-
-from keystone.common import cassandra
+import pdb; pdb.set_trace()
+from keystone.common import cass
 from keystone import credential
 from keystone import exception
 
 from cassandra.cqlengine import columns
 from cassandra.cqlengine import connection
-from cassandra.cqlengine import BatchQuery
+from cassandra.cqlengine.query import BatchQuery
 from cassandra.cqlengine.management import sync_table
 from cassandra.cqlengine.query import BatchType
 
-class CredentialModel(cassandra.ExtrasModel):
+class CredentialModel(cass.ExtrasModel):
     id = columns.Text(primary_key=True, max_length=64)
     user_id = columns.Text(max_length=64, index=True)
     project_id = columns.Text(max_length=64, index=True)
@@ -30,7 +30,7 @@ class CredentialModel(cassandra.ExtrasModel):
     type = columns.Text(max_length=255)
     extra = columns.Text(default='')
 
-connection.setup(cassandra.ips, cassandra.keyspace)
+connection.setup(cass.ips, cass.keyspace)
 
 sync_table(CredentialModel)
 
@@ -44,7 +44,7 @@ class Credential(credential.Driver):
         ref = CredentialModel.create(**create_dict)
         return ref.to_dict()
 
-    @cassandra.truncated
+    @cass.truncated
     def list_credentials(self, hints):
         refs = CredentialModel.objects()
         return [ref.to_dict() for ref in refs]
