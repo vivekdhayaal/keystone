@@ -24,7 +24,7 @@ from keystone.openstack.common import log
 
 from cassandra.cqlengine import columns
 from cassandra.cqlengine import connection
-from cassandra.cqlengine import BatchQuery
+from cassandra.cqlengine.query import BatchQuery
 from cassandra.cqlengine.management import sync_table
 from cassandra.cqlengine.query import BatchType, DoesNotExist
 
