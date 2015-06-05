@@ -398,7 +398,7 @@ class Assignment(keystone_assignment.Driver):
         for ref in refs:
             ref.delete()
 
-    def delete_user(self, user_id):
+    def delete_user_assignments(self, user_id):
         refs_list = []
         for type in [AssignmentType.USER_PROJECT,
                 AssignmentType.USER_DOMAIN,
@@ -409,7 +409,7 @@ class Assignment(keystone_assignment.Driver):
             for ref in refs:
                 ref.delete()
 
-    def delete_group(self, group_id):
+    def delete_group_assignments(self, group_id):
         refs_list = []
         for type in [AssignmentType.USER_PROJECT,
                 AssignmentType.USER_DOMAIN,
