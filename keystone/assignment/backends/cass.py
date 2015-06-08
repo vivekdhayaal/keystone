@@ -324,13 +324,12 @@ class Assignment(keystone_assignment.Driver):
         # the case when the exception will be thrown. Another alternative would
         # be to just do a write, which will overwrite a previous value if it
         # existed, and this won't raise an exception
-        ref = RoleAssignment(
+        #import pdb; pdb.set_trace()
+        refs = RoleAssignment.objects.filter(
                 type=AssignmentType.USER_PROJECT,
-                actor_id=user_id,
-                target_id=tenant_id,
-                role_id=role_id,
-                inherited=False)
-        if len(ref) != 0:
+                actor_id=user_id)
+        refs = [ref for ref in refs if ref.target_id == tenant_id and ref.role_id == role_id ]
+        if len(refs) != 0:
             msg = ('User %s already has role %s in tenant %s'
                    % (user_id, role_id, tenant_id))
             raise exception.Conflict(type='role grant', details=msg)
@@ -343,13 +342,18 @@ class Assignment(keystone_assignment.Driver):
             inherited=False)
 
     def remove_role_from_user_and_project(self, user_id, tenant_id, role_id):
-        try:
-            ref = RoleAssignment.get(
-                actor_id=user_id,
-                target_id=tenant_id,
-                role_id=role_id)
-            ref.delete()
-        except DoesNotExist:
+        role_found = False
+        for type in [AssignmentType.USER_PROJECT,
+                AssignmentType.USER_DOMAIN,
+                AssignmentType.GROUP_PROJECT,
+                AssignmentType.GROUP_DOMAIN]:
+            refs = RoleAssignment.filter(type=type, actor_id=user_id)
+            for ref in refs:
+                if ref.target_id == tenant_id and ref.role_id == role_id:
+                    role_found = True
+                    ref.delete()
+
+        if not role_found:
             raise exception.RoleNotFound(message=_(
                 'Cannot remove role that has not been granted, %s') %
                 role_id)
