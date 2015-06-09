@@ -164,8 +164,8 @@ class Assignment(keystone_assignment.Driver):
                 type=_calc_assignment_type(),
                 actor_id=(user_id or group_id),
                 target_id=(project_id or domain_id),
-                role_id=role_id,
-                inherited=inherited_to_projects)
+                role_id=role_id)
+        refs = [ref for ref in refs if ref.inherited==inherited_to_projects]
         return refs
 
     def check_grant_role_id(self, role_id, user_id=None, group_id=None,
@@ -199,13 +199,23 @@ class Assignment(keystone_assignment.Driver):
         if not group_only:
             assignment_type.append(AssignmentType.USER_PROJECT)
 
-
         # NOT checking distinctness
-        refs = RoleAssignment.objects.filter(
-                type__in=assignment_type,
-                inherited=inherited,
-                actor_id__in=actors)
-        return [ref.target_id for ref in refs]
+
+        project_ids = []
+        for type in [AssignmentType.USER_PROJECT,
+                AssignmentType.USER_DOMAIN,
+                AssignmentType.GROUP_PROJECT,
+                AssignmentType.GROUP_DOMAIN]:
+            for actor in actors:
+
+                refs = RoleAssignment.objects.filter(
+                        type=type,
+                        actor_id=actor,
+                        inherited=inherited)
+                ids = [ref.target_id for ref in refs]
+                project_ids.extend(ids)
+
+        return project_ids
 
 
     def list_project_ids_for_user(self, user_id, group_ids, hints,
