@@ -39,6 +39,20 @@ class User(cass.ExtrasModel):
     extra = columns.Text()
     default_project_id = columns.Text(max_length=64)
 
+## GSI of 'user' table, with domain_id as the partition key
+## and user_id as the clustering column. This table is for query
+## 'select all users from a particular domain'
+#class GSIUserDomainIdUserId(Model):
+#    __table_name__ = 'gsi_user0domain_id0id0pk0id0user_id0cc'
+#    # The table name means the table is a GSI on 'user' table, where
+#    # domain_id column of user table is 'id' of this table which is a
+#    # partition key, and 'id' column of user table is user_id of this table
+#    # which is a clustering column of the primary key.
+#    # TODO(rushiagr): move this comment to a common place when this
+#    # convention needs to be followed while creating new GSIs
+#    id = columns.Text(primary_key=True, max_length=64)
+#    user_id = columns.Text(primary_key=True, max_length=64)
+
 class DomainIdUserNameToUserId(cass.ExtrasModel):
     __table_name__ = 'domain_id_user_name_to_user_id'
     domain_id = columns.Text(primary_key=True, max_length=64)
