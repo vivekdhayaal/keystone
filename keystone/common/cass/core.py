@@ -21,6 +21,7 @@ To create keyspace by name keystone:
 """
 from cassandra.cqlengine.models import Model, ModelMetaClass
 from cassandra.cqlengine.named import NamedTable
+from cassandra.cqlengine.query import DoesNotExist
 
 import functools
 import json
@@ -130,6 +131,16 @@ def is_secondary_idx_on_col(model_cls, column):
         ix_ref = IndexInfo.objects.get(table_name=keyspace,
                 index_name=index_name)
     except DoesNotExist:
+        #import pdb; pdb.set_trace()
+        # NOTE(rushiagr): there are two more columns 'enabled' and 'name'
+        # in 'user' table
+        # where hints are not being filtered by the driver, but we never
+        # noticed that as the controller was doing the filtering anyway.
+        # We noticed the issue only in case of list_users and list_groups
+        # only because there is a bug in keystone -- at one place, these
+        # two methods are used 'bare', i.e., these methods are called
+        # directly, without calling the methods which anyway filter
+        # if the driver methods don't filter
         return False
 
     return True
