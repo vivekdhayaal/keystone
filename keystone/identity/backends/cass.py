@@ -33,7 +33,7 @@ class User(cass.ExtrasModel):
     __table_name__ = 'user'
     id = columns.Text(primary_key=True, max_length=64)
     name = columns.Text(max_length=255)
-    domain_id = columns.Text(max_length=64)
+    domain_id = columns.Text(max_length=64, index=True)
     password = columns.Text(max_length=128)
     enabled = columns.Boolean()
     extra = columns.Text()
@@ -63,7 +63,7 @@ class Group(cass.ExtrasModel):
     __table_name__ = 'group'
     id = columns.Text(primary_key=True, max_length=64)
     name = columns.Text(max_length=64)
-    domain_id = columns.Text(max_length=64)
+    domain_id = columns.Text(max_length=64, index=True)
     description = columns.Text()
     extra = columns.Text()
 
