@@ -192,9 +192,6 @@ class Assignment(keystone_assignment.Driver):
 
     def _list_project_ids_for_actor(self, actors, hints, inherited,
                                     group_only=False):
-        # TODO(henry-nash): Now that we have a single assignment table, we
-        # should be able to honor the hints list that is provided.
-
         assignment_type = [AssignmentType.GROUP_PROJECT]
         if not group_only:
             assignment_type.append(AssignmentType.USER_PROJECT)
@@ -334,7 +331,6 @@ class Assignment(keystone_assignment.Driver):
         # the case when the exception will be thrown. Another alternative would
         # be to just do a write, which will overwrite a previous value if it
         # existed, and this won't raise an exception
-        #import pdb; pdb.set_trace()
         refs = RoleAssignment.objects.filter(
                 type=AssignmentType.USER_PROJECT,
                 actor_id=user_id)
