@@ -145,8 +145,18 @@ class Identity(identity.Driver):
 
     @cass.truncated
     def list_users(self, hints):
-        # @TODO: use the hints!
-        user_refs = User.objects.all()
+        # @TODO: Implement complete hints!
+        x_cols = cass.get_exact_comparison_columns(hints)
+        if len(x_cols) == 1 and cass.is_secondary_idx_on_col(User, x_cols[0]):
+            # We're here means there is exactly one filter in hints, and that
+            # filter is an exact filter, and that for the attribute of filter,
+            # there is a secondary index on that column
+            filt = hints.filters[0]
+            kv_dict = {filt['name']: filt['value']}
+            user_refs = User.objects.filter(**kv_dict)
+        else:
+            user_refs = User.objects.all()
+
         # session = sql.get_session()
         # query = session.query(User)
         # user_refs = sql.filter_limit_query(User, query, hints)
@@ -236,7 +246,7 @@ class Identity(identity.Driver):
                                       'group_id': group_id})
 
     def list_groups_for_user(self, user_id, hints):
-        # TODO(blah) use the hints
+        # TODO(rushiagr) use the hints
         results = UserGroups.objects.filter(user_id=user_id)
         groups = []
         for result in results:
@@ -303,8 +313,18 @@ class Identity(identity.Driver):
 
     @cass.truncated
     def list_groups(self, hints):
-        # TODO(rushiagr): use the hints!
-        refs = Group.objects.all()
+        # TODO(rushiagr): implement complete hints!
+        x_cols = cass.get_exact_comparison_columns(hints)
+        if len(x_cols) == 1 and cass.is_secondary_idx_on_col(Group, x_cols[0]):
+            # We're here means there is exactly one filter in hints, and that
+            # filter is an exact filter, and that for the attribute of filter,
+            # there is a secondary index on that column
+            filt = hints.filters[0]
+            kv_dict = {filt['name']: filt['value']}
+            refs = Group.objects.filter(**kv_dict)
+        else:
+            refs = Group.objects.all()
+
         return [ref.to_dict() for ref in refs]
 
     def _get_group(self, group_id):
