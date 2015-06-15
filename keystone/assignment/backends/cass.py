@@ -72,11 +72,11 @@ class Assignment(keystone_assignment.Driver):
 
     def _get_metadata(self, user_id=None, tenant_id=None,
                       domain_id=None, group_id=None, session=None):
-        ## TODO(henry-nash): This method represents the last vestiges of the old
-        ## metadata concept in this driver.  Although we no longer need it here,
-        ## since the Manager layer uses the metadata concept across all
-        ## assignment drivers, we need to remove it from all of them in order to
-        ## finally remove this method.
+        # TODO(henry-nash): This method represents the last vestiges of the old
+        # metadata concept in this driver.  Although we no longer need it here,
+        # since the Manager layer uses the metadata concept across all
+        # assignment drivers, we need to remove it from all of them in order to
+        # finally remove this method.
         def _calc_assignment_type():
             # Figure out the assignment type we're checking for from the args.
             if user_id:
@@ -127,24 +127,17 @@ class Assignment(keystone_assignment.Driver):
     def list_grant_role_ids(self, user_id=None, group_id=None,
                             domain_id=None, project_id=None,
                             inherited_to_projects=False):
-        refs_list = []
-        for type in [AssignmentType.USER_PROJECT,
-                AssignmentType.USER_DOMAIN,
-                AssignmentType.GROUP_PROJECT,
-                AssignmentType.GROUP_DOMAIN]:
-            refs_list.append(RoleAssignment.objects.filter(
-                    type=type,
-                    actor_id=(user_id or group_id),
-                    target_id=(project_id or domain_id),
-                    #inherited=inherited_to_projects
-                    ))
+        assignment_type = AssignmentType.calculate_type(
+            user_id, group_id, project_id, domain_id)
 
-        role_list = []
-        for refs in refs_list:
-            for ref in refs:
-                if ref.inherited == inherited_to_projects:
-                    role_list.append(ref.role_id)
-        return role_list
+        refs = RoleAssignment.objects.filter(
+                type=assignment_type,
+                actor_id=(user_id or group_id),
+                target_id=(project_id or domain_id),
+                )
+
+        return [ref.role_id for ref in refs
+                if ref.inherited == inherited_to_projects]
 
     def _build_grant_filter(self, role_id, user_id, group_id,
                             domain_id, project_id, inherited_to_projects):
@@ -199,12 +192,8 @@ class Assignment(keystone_assignment.Driver):
         # NOT checking distinctness
 
         project_ids = []
-        for type in [AssignmentType.USER_PROJECT,
-                AssignmentType.USER_DOMAIN,
-                AssignmentType.GROUP_PROJECT,
-                AssignmentType.GROUP_DOMAIN]:
+        for type in assignment_type:
             for actor in actors:
-
                 refs = RoleAssignment.objects.filter(
                         type=type,
                         actor_id=actor,
@@ -333,8 +322,10 @@ class Assignment(keystone_assignment.Driver):
         # existed, and this won't raise an exception
         refs = RoleAssignment.objects.filter(
                 type=AssignmentType.USER_PROJECT,
-                actor_id=user_id)
-        refs = [ref for ref in refs if ref.target_id == tenant_id and ref.role_id == role_id ]
+                actor_id=user_id,
+                target_id=tenant_id,
+                role_id=role_id)
+        refs = [ref for ref in refs]
         if len(refs) != 0:
             msg = ('User %s already has role %s in tenant %s'
                    % (user_id, role_id, tenant_id))
@@ -348,21 +339,24 @@ class Assignment(keystone_assignment.Driver):
             inherited=False)
 
     def remove_role_from_user_and_project(self, user_id, tenant_id, role_id):
-        role_found = False
-        for type in [AssignmentType.USER_PROJECT,
-                AssignmentType.USER_DOMAIN,
-                AssignmentType.GROUP_PROJECT,
-                AssignmentType.GROUP_DOMAIN]:
-            refs = RoleAssignment.filter(type=type, actor_id=user_id)
-            for ref in refs:
-                if ref.target_id == tenant_id and ref.role_id == role_id:
-                    role_found = True
-                    ref.delete()
+        # TODO(rushiagr): in the SQL driver, if the role is not present,
+        # the driver throws an exception. In my humble opinion, we should
+        # just pass if the role is not present. Why so much strictness
+        # checking?
+        refs = RoleAssignment.objects.filter(type=AssignmentType.USER_PROJECT,
+                actor_id=user_id,
+                target_id=tenant_id,
+                role_id=role_id)
 
-        if not role_found:
+        if len(refs) == 0:
             raise exception.RoleNotFound(message=_(
                 'Cannot remove role that has not been granted, %s') %
                 role_id)
+
+        for ref in refs:
+            # Can do batch delete here. But only 2 rows at max
+            # will appear here.
+            ref.delete()
 
     def list_role_assignments(self):
 
@@ -395,6 +389,7 @@ class Assignment(keystone_assignment.Driver):
     def delete_project_assignments(self, project_id):
         # NOTE(rushiagr): this throws DoesNotExist error, so add try..except
         # block temporarily
+        # TODO(rushiagr): Looks like this method is incomplete. Fix it!
         try:
             ref = RoleAssignment.get(target_id=project_id)
             ref.delete()
@@ -402,32 +397,30 @@ class Assignment(keystone_assignment.Driver):
             pass
 
     def delete_role_assignments(self, role_id):
-        # TODO: batch operation here
         refs = RoleAssignment.filter(role_id=role_id)
-        for ref in refs:
-            ref.delete()
+        with BatchQuery(batch_type=BatchType.Unlogged) as b:
+            for ref in refs:
+                ref.batch(b).delete()
 
     def delete_user_assignments(self, user_id):
         refs_list = []
         for type in [AssignmentType.USER_PROJECT,
-                AssignmentType.USER_DOMAIN,
-                AssignmentType.GROUP_PROJECT,
-                AssignmentType.GROUP_DOMAIN]:
+                AssignmentType.USER_DOMAIN]:
             refs_list.append(RoleAssignment.filter(type=type, actor_id=user_id))
-        for refs in refs_list:
-            for ref in refs:
-                ref.delete()
+        with BatchQuery(batch_type=BatchType.Unlogged) as b:
+            for refs in refs_list:
+                for ref in refs:
+                    ref.batch(b).delete()
 
     def delete_group_assignments(self, group_id):
         refs_list = []
-        for type in [AssignmentType.USER_PROJECT,
-                AssignmentType.USER_DOMAIN,
-                AssignmentType.GROUP_PROJECT,
+        for type in [AssignmentType.GROUP_PROJECT,
                 AssignmentType.GROUP_DOMAIN]:
             refs_list.append(RoleAssignment.filter(type=type, actor_id=group_id))
-        for refs in refs_list:
-            for ref in refs:
-                ref.delete()
+        with BatchQuery(batch_type=BatchType.Unlogged) as b:
+            for refs in refs_list:
+                for ref in refs:
+                    ref.batch(b).delete()
 
 class RoleAssignment(cass.ExtrasModel):
     __tablename__ = 'assignment'
