@@ -157,9 +157,6 @@ class Identity(identity.Driver):
         else:
             user_refs = User.objects.all()
 
-        # session = sql.get_session()
-        # query = session.query(User)
-        # user_refs = sql.filter_limit_query(User, query, hints)
         return [identity.filter_user(x.to_dict()) for x in user_refs]
 
     def _get_user(self, user_id):
@@ -223,7 +220,6 @@ class Identity(identity.Driver):
 
 
     def remove_user_from_group(self, user_id, group_id):
-        # session = sql.get_session()
         # We don't check if user or group are still valid and let the remove
         # be tried anyway - in case this is some kind of clean-up operation
         membership_ref = None
@@ -256,27 +252,7 @@ class Identity(identity.Driver):
 
         return groups
 
-        # TODO(henry-nash) We could implement full filtering here by enhancing
-        # the join below.  However, since it is likely to be a fairly rare
-        # occurrence to filter on more than the user_id already being used
-        # here, this is left as future enhancement and until then we leave
-        # it for the controller to do for us.
-        # session = sql.get_session()
-        # self.get_user(user_id)
-        # query = session.query(Group).join(UserGroupMembership)
-        # query = query.filter(UserGroupMembership.user_id == user_id)
-        # return [g.to_dict() for g in query]
-
     def list_users_in_group(self, group_id, hints):
-        # TODO(henry-nash) We could implement full filtering here by enhancing
-        # the join below.  However, since it is likely to be a fairly rare
-        # occurrence to filter on more than the group_id already being used
-        # here, this is left as future enhancement and until then we leave
-        # it for the controller to do for us.
-        # session = sql.get_session()
-        # self.get_group(group_id)
-        # query = session.query(User).join(UserGroupMembership)
-        # query = query.filter(UserGroupMembership.group_id == group_id)
         results = GroupMembership.objects.filter(group_id=group_id)
         users = []
         for result in results:
@@ -285,7 +261,6 @@ class Identity(identity.Driver):
             users.append(identity.filter_user(uid_ref.to_dict()))
 
         return users
-        # return [identity.filter_user(u.to_dict()) for u in query]
 
     def delete_user(self, user_id):
         user_ref = self._get_user(user_id)
