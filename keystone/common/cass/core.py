@@ -43,7 +43,7 @@ class ExtrasModel(Model):
 
     @classmethod
     def get_model_dict(cls, d, extras_table=True):
-        # 'extras_table' is for working with tables which doesn't have extras
+        # 'extras_table' option is for working with tables which doesn't have extras
         # magic. For such tables, just pass extras_table=False
         new_dict = d.copy()
 
@@ -135,7 +135,6 @@ def is_secondary_idx_on_col(model_cls, column):
         ix_ref = IndexInfo.objects.get(table_name=keyspace,
                 index_name=index_name)
     except DoesNotExist:
-        #import pdb; pdb.set_trace()
         # NOTE(rushiagr): there are two more columns 'enabled' and 'name'
         # in 'user' table
         # where hints are not being filtered by the driver, but we never
