@@ -31,6 +31,11 @@ import functools
 import json
 
 from keystone import exception
+from keystone.i18n import _
+
+from oslo_log import log
+
+LOG = log.getLogger(__name__)
 
 ips=['127.0.0.1']
 keyspace='keystone'
@@ -148,6 +153,27 @@ def is_secondary_idx_on_col(model_cls, column):
 
     return True
 
+def handle_conflicts(conflict_type='object'):
+    """Converts select sqlalchemy exceptions into HTTP 409 Conflict."""
+    _conflict_msg = 'Conflict %(conflict_type)s: %(details)s'
+
+    def decorator(method):
+        @functools.wraps(method)
+        def wrapper(*args, **kwargs):
+            try:
+                return method(*args, **kwargs)
+            except exception.Conflict as e:
+                # LOG the exception for debug purposes, do not send the
+                # exception details out with the raised Conflict exception
+                # as it can contain raw SQL.
+                LOG.debug(_conflict_msg, {'conflict_type': conflict_type,
+                                          'details': six.text_type(e)})
+                raise exception.Conflict(type=conflict_type,
+                                         details=_('Duplicate Entry'))
+
+        return wrapper
+    return decorator
+
 class QuorumFallBackRetryPolicy(RetryPolicy):
     def on_unavailable(self, query, consistency, required_replicas, alive_replicas, retry_num):
         if retry_num != 0:
@@ -162,4 +188,3 @@ def connect_to_cluster(ips, keyspace):
     return connection.setup(ips, keyspace, consistency = ConsistencyLevel.LOCAL_QUORUM, 
                             load_balancing_policy = TokenAwarePolicy(DCAwareRoundRobinPolicy()),
                             default_retry_policy = QuorumFallBackRetryPolicy())
-
