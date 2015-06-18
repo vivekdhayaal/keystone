@@ -19,6 +19,7 @@ from keystone import identity
 from keystone.common import utils
 from keystone.i18n import _
 from keystone.i18n import _LE
+from keystone import resource as keystone_resource
 
 from keystone.common import sql
 from keystone import clean
@@ -33,249 +34,287 @@ CONF = cfg.CONF
 LOG = log.getLogger(__name__)
 
 
-class User(cass.ExtrasModel):
-    __table_name__ = 'user'
+class Domain(cass.ExtrasModel):
+    __table_name__ = 'domain'
     id = columns.Text(primary_key=True, max_length=64)
-    name = columns.Text(max_length=255)
-    domain_id = columns.Text(max_length=64, index=True)
-    password = columns.Text(max_length=128)
+    name = columns.Text(max_length=64) # IN SQL version length<64 IDK why.
+    enabled = columns.Boolean(default=True)
+    extra = columns.Text()
+
+class DomainGSIName(cass.ExtrasModel):
+    __table_name__ = 'domain_gsi_name'
+    name = columns.Text(primary_key=True, max_length=64)
+    domain_id = columns.Text(max_length=64)
+
+class Project(cass.ExtrasModel):
+    __table_name__ = 'project'
+    id = columns.Text(primary_key=True, max_length=64)
+    name = columns.Text(max_length=64) # IN SQL version length<64 IDK why.
+    domain_id = columns.Text(max_length=255, index=True)
+    description = columns.Text()
     enabled = columns.Boolean()
     extra = columns.Text()
-    default_project_id = columns.Text(max_length=64)
+    parent_id = columns.Text(max_length=255)
+    name = columns.Text(max_length=255)
 
-class Domain(sql.ModelBase, sql.DictBase):
-    __tablename__ = 'domain'
-    attributes = ['id', 'name', 'enabled']
-    id = sql.Column(sql.String(64), primary_key=True)
-    name = sql.Column(sql.String(64), nullable=False)
-    enabled = sql.Column(sql.Boolean, default=True, nullable=False)
-    extra = sql.Column(sql.JsonBlob())
-    __table_args__ = (sql.UniqueConstraint('name'), {})
+class ProjectGSINameDomainId(cass.ExtrasModel):
+    __table_name__ = 'project_gsi_name_domain_id'
+    name = columns.Text(primary_key=True, partition_key=True,  max_length=64)
+    domain_id = columns.Text(primary_key=True, partition_key=True, max_length=64)
+    project_id = columns.Text(max_length=64)
 
+connection.setup(cass.ips, cass.keyspace)
 
-class Project(sql.ModelBase, sql.DictBase):
-    __tablename__ = 'project'
-    attributes = ['id', 'name', 'domain_id', 'description', 'enabled',
-                  'parent_id']
-    id = sql.Column(sql.String(64), primary_key=True)
-    name = sql.Column(sql.String(64), nullable=False)
-    domain_id = sql.Column(sql.String(64), sql.ForeignKey('domain.id'),
-                           nullable=False)
-    description = sql.Column(sql.Text())
-    enabled = sql.Column(sql.Boolean)
-    extra = sql.Column(sql.JsonBlob())
-    parent_id = sql.Column(sql.String(64), sql.ForeignKey('project.id'))
-    # Unique constraint across two columns to create the separation
-    # rather than just only 'name' being unique
-    __table_args__ = (sql.UniqueConstraint('domain_id', 'name'), {})
-
-
+sync_table(Domain)
+sync_table(DomainGSIName)
+sync_table(Project)
+sync_table(ProjectGSINameDomainId)
 
 class Resource(keystone_resource.Driver):
 
     def default_assignment_driver(self):
         return 'sql'
 
-    def _get_project(self, session, project_id):
-        project_ref = session.query(Project).get(project_id)
-        if project_ref is None:
+    def _get_project(self, project_id):
+        try:
+            return Project.get(id=project_id)
+        except DoesNotExist:
             raise exception.ProjectNotFound(project_id=project_id)
-        return project_ref
+
 
     def get_project(self, tenant_id):
-        with sql.transaction() as session:
-            return self._get_project(session, tenant_id).to_dict()
+        return self._get_project(tenant_id).to_dict()
 
     def get_project_by_name(self, tenant_name, domain_id):
-        with sql.transaction() as session:
-            query = session.query(Project)
-            query = query.filter_by(name=tenant_name)
-            query = query.filter_by(domain_id=domain_id)
-            try:
-                project_ref = query.one()
-            except sql.NotFound:
-                raise exception.ProjectNotFound(project_id=tenant_name)
-            return project_ref.to_dict()
+        try:
+            project_gsi_ref = ProjectGSINameDomainId.get(name=tenant_name,
+                    domain_id=domain_id)
+            project_ref = Project.get(id=project_gsi_ref.project_id)
+        except DoesNotExist:
+            raise exception.ProjectNotFound(project_id=tenant_name)
 
-    @sql.truncated
+
+        return project_ref.to_dict()
+
+    @cass.truncated
     def list_projects(self, hints):
-        with sql.transaction() as session:
-            query = session.query(Project)
-            project_refs = sql.filter_limit_query(Project, query, hints)
-            return [project_ref.to_dict() for project_ref in project_refs]
+        # NOTE(rushiagr): All the time we're only talking about filtering
+        # based on hints if the filter key is a secondary index or a GSI. BUT
+        # what if it's the primary key itself of the table? E.g., here in
+        # list_projects, say the filter is 'id=<a project id>'?. It seems
+        # quite likely that this might happen, and we should implement this.
+
+        # TODO(rushiagr): filter hints if the filter is the primary key
+        # TODO(rushiagr): filter hints based on GSI
+
+        x_cols = cass.get_exact_comparison_columns(hints)
+        if len(x_cols) == 1 and cass.is_secondary_idx_on_col(Project, x_cols[0]):
+            filt = hints.filters[0]
+            kv_dict = {filt['name']: filt['value']}
+            refs = Project.objects.filter(**kv_dict)
+        else:
+            refs = Project.objects.all()
+        return [ref.to_dict() for ref in refs]
+
 
     def list_projects_from_ids(self, ids):
         if not ids:
             return []
         else:
-            with sql.transaction() as session:
-                query = session.query(Project)
-                query = query.filter(Project.id.in_(ids))
-                return [project_ref.to_dict() for project_ref in query.all()]
+            refs = Project.objects.filter(id__in=ids)
+            return [ref.to_dict() for ref in refs]
 
     def list_project_ids_from_domain_ids(self, domain_ids):
         if not domain_ids:
             return []
         else:
-            with sql.transaction() as session:
-                query = session.query(Project.id)
-                query = (
-                    query.filter(Project.domain_id.in_(domain_ids)))
-                return [x.id for x in query.all()]
+            refs_list = []
+            for domain_id in domain_ids:
+                refs = Project.objects.filter(domain_id=domain_id)
+                refs_list.append(refs)
+            return_list = []
+            for refs in refs_list:
+                return_list.extend([ref.id for ref in refs])
 
     def list_projects_in_domain(self, domain_id):
-        with sql.transaction() as session:
-            self._get_domain(session, domain_id)
-            query = session.query(Project)
-            project_refs = query.filter_by(domain_id=domain_id)
-            return [project_ref.to_dict() for project_ref in project_refs]
+        refs = Project.objects.filter(domain_id=domain_id)
+        return [ref.to_dict() for ref in refs]
 
-    def _get_children(self, session, project_ids):
-        query = session.query(Project)
-        query = query.filter(Project.parent_id.in_(project_ids))
-        project_refs = query.all()
-        return [project_ref.to_dict() for project_ref in project_refs]
+    def _get_children(self, project_ids):
+        pass
 
     def list_projects_in_subtree(self, project_id):
-        with sql.transaction() as session:
-            children = self._get_children(session, [project_id])
-            subtree = []
-            examined = set([project_id])
-            while children:
-                children_ids = set()
-                for ref in children:
-                    if ref['id'] in examined:
-                        msg = _LE('Circular reference or a repeated '
-                                  'entry found in projects hierarchy - '
-                                  '%(project_id)s.')
-                        LOG.error(msg, {'project_id': ref['id']})
-                        return
-                    children_ids.add(ref['id'])
-
-                examined.update(children_ids)
-                subtree += children
-                children = self._get_children(session, children_ids)
-            return subtree
+        raise exception.NotImplemented()
 
     def list_project_parents(self, project_id):
-        with sql.transaction() as session:
-            project = self._get_project(session, project_id).to_dict()
-            parents = []
-            examined = set()
-            while project.get('parent_id') is not None:
-                if project['id'] in examined:
-                    msg = _LE('Circular reference or a repeated '
-                              'entry found in projects hierarchy - '
-                              '%(project_id)s.')
-                    LOG.error(msg, {'project_id': project['id']})
-                    return
-
-                examined.add(project['id'])
-                parent_project = self._get_project(
-                    session, project['parent_id']).to_dict()
-                parents.append(parent_project)
-                project = parent_project
-            return parents
+        raise exception.NotImplemented()
 
     def is_leaf_project(self, project_id):
-        with sql.transaction() as session:
-            project_refs = self._get_children(session, [project_id])
-            return not project_refs
+        return True
+        #raise NotImplementedError()
 
     # CRUD
-    @sql.handle_conflicts(conflict_type='project')
+    @cass.handle_conflicts(conflict_type='project')
     def create_project(self, tenant_id, tenant):
-        tenant['name'] = clean.project_name(tenant['name'])
-        with sql.transaction() as session:
-            tenant_ref = Project.from_dict(tenant)
-            session.add(tenant_ref)
-            return tenant_ref.to_dict()
+        try:
+            ref = Project.get(id=tenant['id'])
+            raise exception.Conflict(type='object',
+                    details=_('Duplicate Entry'))
+        except DoesNotExist:
+            pass
 
-    @sql.handle_conflicts(conflict_type='project')
+        try:
+            gsi_ref = ProjectGSINameDomainId.get(name=tenant['name'], domain_id=tenant['domain_id'])
+            raise exception.Conflict(type='object',
+                    details=_('Duplicate Entry'))
+        except DoesNotExist:
+            pass
+
+        tenant['name'] = clean.project_name(tenant['name'])
+        tenant['id'] = tenant_id
+
+        project_create_dict = Project.get_model_dict(tenant)
+        ref = Project.create(**project_create_dict)
+        gsi_create_dict = {
+                'name': tenant['name'],
+                'domain_id': tenant['domain_id'],
+                'project_id': tenant_id,
+                }
+        gsi_ref = ProjectGSINameDomainId.create(**gsi_create_dict)
+        return ref.to_dict()
+
+    #@sql.handle_conflicts(conflict_type='project')
     def update_project(self, tenant_id, tenant):
         if 'name' in tenant:
             tenant['name'] = clean.project_name(tenant['name'])
 
-        with sql.transaction() as session:
-            tenant_ref = self._get_project(session, tenant_id)
-            old_project_dict = tenant_ref.to_dict()
-            for k in tenant:
-                old_project_dict[k] = tenant[k]
-            new_project = Project.from_dict(old_project_dict)
-            for attr in Project.attributes:
-                if attr != 'id':
-                    setattr(tenant_ref, attr, getattr(new_project, attr))
-            tenant_ref.extra = new_project.extra
-            return tenant_ref.to_dict(include_extra_dict=True)
+        tenant_ref = self._get_project(tenant_id)
+        old_project_dict = tenant_ref.to_dict()
 
-    @sql.handle_conflicts(conflict_type='project')
+        if (old_project_dict['name'] != tenant['name'] or
+                old_project_dict['domain_id'] != tenant['domain_id']):
+            exception.ForbiddenAction(message='project name or domain_id cannot be updated')
+
+        # NOTE(rushiagr): Following commented code is left here
+        # intentionally. This is because when we would want to write tests
+        # to pass tempest, we might have to write update functionality too
+        # even though it is not very efficient and is racy with distributed
+        # databases
+        #gsi_updated = False
+        #if (old_project_dict['name'] != tenant['name'] or
+        #        old_project_dict['domain_id'] != tenant['domain_id']):
+        #    gsi_updated = True
+
+        for key in tenant:
+            old_project_dict[key] = tenant[key]
+        new_project_dict = Project.get_model_dict(old_project_dict)
+
+        # Just creating another entry with same ID will override existing one
+        ref = Project.create(**new_project_dict)
+
+        #if gsi_updated:
+        #    gsi_dict = {'name': new_project_dict['name'],
+        #        'domain_id': new_project_dict['domain_id'],
+        #        'project_id': new_project_dict['id']
+        #        }
+        #    new_gsi_dict = ProjectGSINameDomainId.get_model_dict(
+        #        gsi_dict, extras_table=False)
+        #    ProjectGSINameDomainId.create(**new_gsi_dict)
+
+        return ref.to_dict()
+
+
+    #@sql.handle_conflicts(conflict_type='project')
     def delete_project(self, tenant_id):
-        with sql.transaction() as session:
-            tenant_ref = self._get_project(session, tenant_id)
-            session.delete(tenant_ref)
+        try:
+            ref = Project.get(id=tenant_id)
+            Project(id=tenant_id).delete()
+            ProjectGSINameDomainId(name=ref.name, domain_id=ref.domain_id).delete()
+        except DoesNotExist:
+            pass
+
+
 
     # domain crud
 
-    @sql.handle_conflicts(conflict_type='domain')
+    #@sql.handle_conflicts(conflict_type='domain')
     def create_domain(self, domain_id, domain):
-        with sql.transaction() as session:
-            ref = Domain.from_dict(domain)
-            session.add(ref)
+        domain_create_dic = Domain.get_model_dict(domain)
+        ref = Domain.create(**domain_create_dic)
+
+        gsi_create_dict = {'name': domain_create_dic['name'],
+                'domain_id': domain_create_dic['id']}
+        gsi_ref = DomainGSIName.create(**gsi_create_dict)
+
         return ref.to_dict()
 
-    @sql.truncated
+    #@sql.truncated
     def list_domains(self, hints):
-        with sql.transaction() as session:
-            query = session.query(Domain)
-            refs = sql.filter_limit_query(Domain, query, hints)
-            return [ref.to_dict() for ref in refs]
+        # NOTE(rushiagr): No secondary index on Domain table, so skip hints!
+        refs = Domain.objects.all()
+        return [ref.to_dict() for ref in refs]
 
     def list_domains_from_ids(self, ids):
         if not ids:
             return []
         else:
-            with sql.transaction() as session:
-                query = session.query(Domain)
-                query = query.filter(Domain.id.in_(ids))
-                domain_refs = query.all()
-                return [domain_ref.to_dict() for domain_ref in domain_refs]
+            refs = Domain.objects.filter(id__in=ids)
+            return [ref.to_dict() for ref in refs]
 
-    def _get_domain(self, session, domain_id):
-        ref = session.query(Domain).get(domain_id)
-        if ref is None:
+    def _get_domain(self, domain_id):
+        try:
+            return Domain.get(id=domain_id)
+        except DoesNotExist:
             raise exception.DomainNotFound(domain_id=domain_id)
-        return ref
 
     def get_domain(self, domain_id):
-        with sql.transaction() as session:
-            return self._get_domain(session, domain_id).to_dict()
+        return self._get_domain(domain_id).to_dict()
 
     def get_domain_by_name(self, domain_name):
-        with sql.transaction() as session:
-            try:
-                ref = (session.query(Domain).
-                       filter_by(name=domain_name).one())
-            except sql.NotFound:
-                raise exception.DomainNotFound(domain_id=domain_name)
-            return ref.to_dict()
+        try:
+            gsi_ref = DomainGSIName.get(name=domain_name)
+            return Domain.get(id=gsi_ref.domain_id).to_dict()
+        except DoesNotExist:
+            raise exception.DomainNotFound(domain_id=domain_name)
 
     @sql.handle_conflicts(conflict_type='domain')
     def update_domain(self, domain_id, domain):
-        with sql.transaction() as session:
-            ref = self._get_domain(session, domain_id)
-            old_dict = ref.to_dict()
-            for k in domain:
-                old_dict[k] = domain[k]
-            new_domain = Domain.from_dict(old_dict)
-            for attr in Domain.attributes:
-                if attr != 'id':
-                    setattr(ref, attr, getattr(new_domain, attr))
-            ref.extra = new_domain.extra
-            return ref.to_dict()
+        old_dict = self._get_domain(domain_id).to_dict()
+
+        # See if GSI needs to be updated
+        # TODO(rushiagr): general function to find out if GSI is updated
+
+        if old_dict['name'] != domain['name']:
+            exception.ForbiddenAction(message='domain name cannot be updated')
+
+        # NOTE(rushiagr): Following commented code is left here
+        # intentionally. This is because when we would want to write tests
+        # to pass tempest, we might have to write update functionality too
+        # even though it is not very efficient and is racy with distributed
+        # databases
+        #gsi_updated = False
+        #if old_dict['name'] != domain['name']:
+        #    gsi_updated = True
+
+        for key in domain:
+            old_dict[key] = domain[key]
+
+        new_dict = Domain.get_model_dict(old_dict)
+        ref = Domain.create(**new_dict)
+
+        #if gsi_updated:
+        #    gsi_dict = {'name': new_dict['name'],
+        #            'domain_id': domain_id}
+        #    new_gsi_dict = DomainGSIName.get_model_dict(
+        #            gsi_dict, extras_table=False)
+        #    DomainGSIName.create(**new_gsi_dict)
+
+        return ref.to_dict()
 
     def delete_domain(self, domain_id):
-        with sql.transaction() as session:
-            ref = self._get_domain(session, domain_id)
-            session.delete(ref)
-
-
+        try:
+            ref = Domain.get(id=domain_id)
+            Domain(id=domain_id).delete()
+            DomainGSIName(name=ref.name).delete()
+        except DoesNotExist:
+            pass
