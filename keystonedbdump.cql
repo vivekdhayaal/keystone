@@ -18,3 +18,20 @@ INSERT INTO role_assignment (type, actor_id, target_id, role_id, inherited) VALU
 INSERT INTO role_assignment (type, actor_id, target_id, role_id, inherited) VALUES ( 'UserProject', '90f0471df5a749e59e997f772b146b07', '2438933b3e0f4420b099209d55ced8bc', 'b76f278949b84582a89cd979223d936a', False);
 INSERT INTO role_assignment (type, actor_id, target_id, role_id, inherited) VALUES ( 'UserProject', 'cf1f87101f8d4e8a92dc8a5a7cfa319e', '2438933b3e0f4420b099209d55ced8bc', '345e4b74170f4d889275880a9cfcccd2', False);
 INSERT INTO role_assignment (type, actor_id, target_id, role_id, inherited) VALUES ( 'UserProject', 'cf1f87101f8d4e8a92dc8a5a7cfa319e', '5488164611064755a49ff7b9d456bc49', '345e4b74170f4d889275880a9cfcccd2', False);
+
+
+
+INSERT INTO project (id, description, domain_id, enabled, extra, parent_id, name) VALUES ('03a5bd375fbc415a9be7f280e6191b29', '', 'default', True, '{}', '', 'invisible_to_admin');
+INSERT INTO project (id, description, domain_id, enabled, extra, parent_id, name) VALUES ('2438933b3e0f4420b099209d55ced8bc', '', 'default', True, '{}', '', 'demo');
+INSERT INTO project (id, description, domain_id, enabled, extra, parent_id, name) VALUES ('5488164611064755a49ff7b9d456bc49', '', 'default', True, '{}', '', 'admin');
+INSERT INTO project (id, description, domain_id, enabled, extra, parent_id, name) VALUES ('fc1e56d8c6b746ba9e0ef2810e84acbd', '', 'default', True, '{}', '', 'service');
+
+INSERT INTO project_gsi_name_domain_id (name, domain_id, project_id) VALUES ('invisible_to_admin', 'default', '03a5bd375fbc415a9be7f280e6191b29');
+INSERT INTO project_gsi_name_domain_id (name, domain_id, project_id) VALUES ('demo', 'default', '2438933b3e0f4420b099209d55ced8bc');
+INSERT INTO project_gsi_name_domain_id (name, domain_id, project_id) VALUES ('admin', 'default', '5488164611064755a49ff7b9d456bc49');
+INSERT INTO project_gsi_name_domain_id (name, domain_id, project_id) VALUES ('service', 'default', 'fc1e56d8c6b746ba9e0ef2810e84acbd');
+
+
+INSERT INTO domain (id, name, enabled, extra) VALUES ('default', 'Default', True, '{"description": "Owns users and tenants (i.e. projects) available on Identity API v2."}');
+
+INSERT INTO domain_gsi_name (name, domain_id) VALUES ('Default', 'default');
