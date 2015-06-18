@@ -21,7 +21,6 @@ from keystone.common import utils
 from keystone.i18n import _
 
 from cassandra.cqlengine import columns
-from cassandra.cqlengine import connection
 from cassandra.cqlengine.management import sync_table
 from cassandra.cqlengine.models import Model
 from cassandra.cqlengine.query import BatchType, DoesNotExist
@@ -83,7 +82,7 @@ class GroupMembership(cass.ExtrasModel):
     group_id = columns.Text(primary_key=True, max_length=64)
     user_id = columns.Text(primary_key=True, clustering_order="DESC", max_length=64)
 
-connection.setup(cass.ips, cass.keyspace)
+cass.connect_to_cluster(cass.ips, cass.keyspace)
 
 sync_table(User)
 sync_table(DomainIdUserNameToUserId)

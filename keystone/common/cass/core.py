@@ -22,6 +22,10 @@ To create keyspace by name keystone:
 from cassandra.cqlengine.models import Model, ModelMetaClass
 from cassandra.cqlengine.named import NamedTable
 from cassandra.cqlengine.query import DoesNotExist
+from cassandra.cqlengine import connection
+from cassandra.policies import TokenAwarePolicy
+from cassandra.policies import DCAwareRoundRobinPolicy
+from cassandra.policies import RetryPolicy
 
 import functools
 import json
@@ -144,3 +148,19 @@ def is_secondary_idx_on_col(model_cls, column):
         return False
 
     return True
+
+class QuorumFallBackRetryPolicy(RetryPolicy):
+    def on_unavailable(self, query, consistency, required_replicas, alive_replicas, retry_num):
+        if retry_num != 0:
+            return (self.RETHROW, None)
+        else:
+            if ConsistencyLevel.LOCAL_QUORUM == consistency:
+                return (self.RETRY, ConsistencyLevel.QUORUM)
+            else:
+                return (self.RETHROW, None)
+
+def connect_to_cluster(ips, keyspace):
+    return connection.setup(ips, keyspace, consistency = ConsistencyLevel.LOCAL_QUORUM, 
+                            load_balancing_policy = TokenAwarePolicy(DCAwareRoundRobinPolicy()),
+                            default_retry_policy = QuorumFallBackRetryPolicy())
+
