@@ -51,7 +51,6 @@ sync_table(TrustModel)
 
 
 class Trust(trust.Driver):
-    @cass.handle_conflicts(conflict_type='trust')
     def create_trust(self, trust_id, trust, roles):
         trust['id'] = trust_id
         if trust.get('expires_at') and trust['expires_at'].tzinfo is not None:
@@ -66,7 +65,6 @@ class Trust(trust.Driver):
         #trust['roles'] = roles
         #return trust
 
-    @cass.handle_conflicts(conflict_type='trust')
     def consume_use(self, trust_id):
         for attempt in range(MAXIMUM_CONSUME_ATTEMPTS):
             trust = self._get_trust(trust_id)
@@ -126,21 +124,17 @@ class Trust(trust.Driver):
         trust['roles'] = roles
         return trust
 
-    @cass.handle_conflicts(conflict_type='trust')
     def list_trusts(self):
         refs = TrustModel.objects().filter(is_deleted=False)
         return [ref.to_dict() for ref in refs]
 
-    @cass.handle_conflicts(conflict_type='trust')
     def list_trusts_for_trustee(self, trustee_user_id):
         refs = TrustModel.objects().filter(is_deleted=False, trustee_user_id=trustee_user_id).allow_filtering()
         return [ref.to_dict() for ref in refs]
 
-    @cass.handle_conflicts(conflict_type='trust')
     def list_trusts_for_trustor(self, trustor_user_id):
         refs = TrustModel.objects().filter(is_deleted=False, trustor_user_id=trustor_user_id).allow_filtering()
         return [ref.to_dict() for ref in refs]
 
-    @cass.handle_conflicts(conflict_type='trust')
     def delete_trust(self, trust_id):
         TrustModel.objects(id=trust_id).update(is_deleted=True, deleted_at=timeutils.utcnow())
