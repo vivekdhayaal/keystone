@@ -22,7 +22,6 @@ from keystone import exception
 from keystone.i18n import _
 
 from cassandra.cqlengine import columns
-from cassandra.cqlengine import connection
 from cassandra.cqlengine.query import BatchQuery
 from cassandra.cqlengine.management import sync_table
 from cassandra.cqlengine.query import BatchType, DoesNotExist
@@ -430,5 +429,5 @@ class RoleAssignment(cass.ExtrasModel):
     role_id = columns.Text(primary_key=True, index=True, max_length=64)
     inherited = columns.Boolean(default=False, required=True, index=True)
 
-connection.setup(cass.ips, cass.keyspace)
+cass.connect_to_cluster(cass.ips, cass.keyspace)
 sync_table(RoleAssignment)

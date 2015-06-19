@@ -17,7 +17,6 @@ from keystone import credential
 from keystone import exception
 
 from cassandra.cqlengine import columns
-from cassandra.cqlengine import connection
 from cassandra.cqlengine.query import BatchQuery
 from cassandra.cqlengine.management import sync_table
 from cassandra.cqlengine.query import BatchType
@@ -30,7 +29,7 @@ class CredentialModel(cass.ExtrasModel):
     type = columns.Text(max_length=255)
     extra = columns.Text(default='')
 
-connection.setup(cass.ips, cass.keyspace)
+cass.connect_to_cluster(cass.ips, cass.keyspace)
 
 sync_table(CredentialModel)
 
