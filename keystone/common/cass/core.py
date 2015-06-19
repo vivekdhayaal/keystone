@@ -46,10 +46,24 @@ import six
 class ExtrasModel(Model):
     __abstract__ = True
 
+    #TODO(rushiagr): it looks like this 'ExtrasModel' class is being
+    # used for ALL of our Cassandra tables, even those which don't have
+    # 'extra' field. We should name this something less misleading, e.g.
+    # 'ExtrasHandledModel'?
+
+    #TODO(rushiagr): remove 'if' conditions from this class which are
+    # specific to a table, e.g. User.
+
     @classmethod
     def get_model_dict(cls, d, extras_table=True):
-        # 'extras_table' option is for working with tables which doesn't have extras
-        # magic. For such tables, just pass extras_table=False
+        # 'extras_table' option is for working with tables which don't have
+        # extras magic. For such tables, just pass extras_table=False
+
+        #TODO(rushiagr): it seems like extras_table boolean can be gotten
+        # completely rid of, and based on the cls parameter we can find
+        # out if the table contains 'extra' column or not, and based on
+        # that we can preform the following manipulation. Implement that.
+
         new_dict = d.copy()
 
         if not extras_table:
@@ -58,8 +72,9 @@ class ExtrasModel(Model):
                     new_dict.pop(k)
             return new_dict
 
-        new_dict['extra'] = json.dumps(dict((k, new_dict.pop(k)) for k in six.iterkeys(d)
-                                if k not in cls._columns and k != 'extra'))
+        new_dict['extra'] = json.dumps(
+                dict((k, new_dict.pop(k)) for k in six.iterkeys(d)
+                    if k not in cls._columns and k != 'extra'))
         return new_dict
 
     def to_dict(self):
@@ -185,6 +200,7 @@ class QuorumFallBackRetryPolicy(RetryPolicy):
                 return (self.RETHROW, None)
 
 def connect_to_cluster(ips, keyspace):
-    return connection.setup(ips, keyspace, consistency = ConsistencyLevel.LOCAL_QUORUM, 
-                            load_balancing_policy = TokenAwarePolicy(DCAwareRoundRobinPolicy()),
-                            default_retry_policy = QuorumFallBackRetryPolicy())
+    return connection.setup(ips, keyspace,
+            consistency = ConsistencyLevel.LOCAL_QUORUM,
+            load_balancing_policy = TokenAwarePolicy(DCAwareRoundRobinPolicy()),
+            default_retry_policy = QuorumFallBackRetryPolicy())
