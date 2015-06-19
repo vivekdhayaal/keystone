@@ -155,7 +155,7 @@ class Mapping(identity.MappingDriver):
         #        # to do.
         #        pass
         try:
-            ref = IDMapping.get(public_id)
+            ref = IDMapping.get(public_id=public_id)
             IDMappingGSI(domain_id=ref.domain_id,
                     local_id=ref.local_id,
                     entity_type=ref.entity_type).delete()
