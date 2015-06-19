@@ -26,6 +26,7 @@ from cassandra.cqlengine import connection
 from cassandra.policies import TokenAwarePolicy
 from cassandra.policies import DCAwareRoundRobinPolicy
 from cassandra.policies import RetryPolicy
+from cassandra import ConsistencyLevel
 
 import functools
 import json
