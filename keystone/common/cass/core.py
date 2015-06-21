@@ -35,7 +35,9 @@ from keystone import exception
 from keystone.i18n import _
 
 from oslo_log import log
+from oslo_config import cfg
 
+CONF = cfg.CONF
 LOG = log.getLogger(__name__)
 
 ips=['127.0.0.1']
@@ -186,6 +188,10 @@ class QuorumFallBackRetryPolicy(RetryPolicy):
                 return (self.RETHROW, None)
 
 def connect_to_cluster(ips, keyspace):
+    if CONF.local_datacenter is not None:
+        policy = DCAwareRoundRobinPolicy(local_dc=CONF.local_datacenter)
+    else:
+        policy = DCAwareRoundRobinPolicy()
     return connection.setup(ips, keyspace, consistency = ConsistencyLevel.LOCAL_QUORUM, 
-                            load_balancing_policy = TokenAwarePolicy(DCAwareRoundRobinPolicy()),
+                            load_balancing_policy = TokenAwarePolicy(policy),
                             default_retry_policy = QuorumFallBackRetryPolicy())
