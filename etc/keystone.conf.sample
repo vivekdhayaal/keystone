@@ -4,6 +4,11 @@
 # From keystone
 #
 
+# The nearest datacenter containing cassandra db 
+# nodes that this keystone service instance should 
+# fetch/store data to.
+# local_datacenter = <local_dc_name>
+
 # A "shared secret" that can be used to bootstrap Keystone. This "token" does
 # not represent a user, and carries no explicit authorization. To disable in
 # production (highly recommended), remove AdminTokenAuthMiddleware from your
