@@ -35,3 +35,15 @@ INSERT INTO project_gsi_name_domain_id (name, domain_id, project_id) VALUES ('se
 INSERT INTO domain (id, name, enabled, extra) VALUES ('default', 'Default', True, '{"description": "Owns users and tenants (i.e. projects) available on Identity API v2."}');
 
 INSERT INTO domain_gsi_name (name, domain_id) VALUES ('Default', 'default');
+
+
+
+INSERT INTO service (id, type, enabled, extra) VALUES ('58138146b86b4627bd6500856826a5d8', 'identity', True, '{"name": "keystone", "description": "Keystone Identity Service"}');
+
+
+INSERT INTO endpoint (id, legacy_endpoint_id, interface, service_id, url, extra, enabled, region_id) VALUES ('01092d12a8064c7caccba2b5b9e5f24f', '59fdfb5a5c884451afe2e520f8020785', 'public', '58138146b86b4627bd6500856826a5d8', 'http://10.0.2.15:5000/v2.0', '{}', True, 'RegionOne');
+INSERT INTO endpoint (id, legacy_endpoint_id, interface, service_id, url, extra, enabled, region_id) VALUES ('7b5fa9a506824b8a8970720ab126e198', '59fdfb5a5c884451afe2e520f8020785', 'admin', '58138146b86b4627bd6500856826a5d8', 'http://10.0.2.15:35357/v2.0', '{}', True, 'RegionOne');
+INSERT INTO endpoint (id, legacy_endpoint_id, interface, service_id, url, extra, enabled, region_id) VALUES ('c4b8ecbc073e47e6b194552754e1e575', '59fdfb5a5c884451afe2e520f8020785', 'internal', '58138146b86b4627bd6500856826a5d8', 'http://10.0.2.15:5000/v2.0', '{}', True, 'RegionOne');
+
+
+INSERT INTO region (id, description, parent_region_id, extra) VALUES ('RegionOne', '', '', '{}');
