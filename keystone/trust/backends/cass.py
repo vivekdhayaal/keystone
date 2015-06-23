@@ -14,6 +14,7 @@
 
 import time
 
+from oslo_log import log
 from oslo_utils import timeutils
 from six.moves import range
 
@@ -26,6 +27,7 @@ from cassandra.cqlengine.query import LWTException
 from cassandra.cqlengine.query import DoesNotExist
 from cassandra.cqlengine.management import sync_table
 
+LOG = log.getLogger(__name__)
 # The maximum number of iterations that will be attempted for optimistic
 # locking on consuming a limited-use trust.
 MAXIMUM_CONSUME_ATTEMPTS = 10
@@ -52,18 +54,29 @@ sync_table(TrustModel)
 
 class Trust(trust.Driver):
     def create_trust(self, trust_id, trust, roles):
-        trust['id'] = trust_id
-        if trust.get('expires_at') and trust['expires_at'].tzinfo is not None:
-            trust['expires_at'] = timeutils.normalize_time(trust['expires_at'])
-        role_set = set([])
-        for role in roles:
-            role_set.add(role['id'])
-        trust['roles'] = role_set
-        create_dict = TrustModel.get_model_dict(trust)
-        ref = TrustModel.create(**create_dict)
-        return ref.to_dict()
-        #trust['roles'] = roles
-        #return trust
+        try:
+            TrustModel.get(id=trust_id)
+            # we are here means, a trust of same id already exists
+            # so raise exception
+            # LOG the exception for debug purposes
+            conflict_type = 'trust'
+            details = 'duplicate entry'
+            _conflict_msg = 'Conflict %(conflict_type)s: %(details)s'
+            LOG.debug(_conflict_msg, {'conflict_type': conflict_type,
+                                      'details': details})
+            raise exception.Conflict(type=conflict_type,
+                                     details=_(details))
+        except DoesNotExist:
+            trust['id'] = trust_id
+            if trust.get('expires_at') and trust['expires_at'].tzinfo is not None:
+                trust['expires_at'] = timeutils.normalize_time(trust['expires_at'])
+            role_set = set([])
+            for role in roles:
+                role_set.add(role['id'])
+            trust['roles'] = role_set
+            create_dict = TrustModel.get_model_dict(trust)
+            ref = TrustModel.create(**create_dict)
+            return ref.to_dict()
 
     def consume_use(self, trust_id):
         for attempt in range(MAXIMUM_CONSUME_ATTEMPTS):
