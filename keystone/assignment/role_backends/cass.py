@@ -12,6 +12,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from oslo_log import log
+
 from keystone import assignment
 from keystone.common import cass
 from keystone import exception
@@ -20,14 +22,27 @@ from cassandra.cqlengine import columns
 from cassandra.cqlengine.query import DoesNotExist
 from cassandra.cqlengine.management import sync_table
 
+LOG = log.getLogger(__name__)
 
 class Role(assignment.RoleDriver):
 
-    #@sql.handle_conflicts(conflict_type='role')
     def create_role(self, role_id, role):
-        create_dict = RoleModel.get_model_dict(role)
-        ref = RoleModel.create(**create_dict)
-        return ref.to_dict()
+        try:
+            RoleModel.get(id=role_id)
+            # we are here means, a role of same id already exists
+            # so raise exception
+            # LOG the exception for debug purposes
+            conflict_type = 'role'
+            details = 'duplicate entry'
+            _conflict_msg = 'Conflict %(conflict_type)s: %(details)s'
+            LOG.debug(_conflict_msg, {'conflict_type': conflict_type,
+                                      'details': details})
+            raise exception.Conflict(type=conflict_type,
+                                     details=_(details))
+        except DoesNotExist:
+            create_dict = RoleModel.get_model_dict(role)
+            ref = RoleModel.create(**create_dict)
+            return ref.to_dict()
 
     @cass.truncated
     def list_roles(self, hints):
@@ -43,25 +58,23 @@ class Role(assignment.RoleDriver):
             role_refs = RoleModel.objects.filter(id__in=ids)
             return [role_ref.to_dict() for role_ref in role_refs]
 
-    def _get_role(self, role_id):
+    def get_role(self, role_id):
         try:
             ref = RoleModel.get(id=role_id)
         except DoesNotExist:
             raise exception.RoleNotFound(role_id=role_id)
         return ref.to_dict()
 
-    def get_role(self, role_id):
-        return self._get_role(role_id)
-
     #@sql.handle_conflicts(conflict_type='role')
+    #Vivek: there doesn't seem to a case when an update would result in a
+    #conflict. So, ignoring the decorator for now.
     def update_role(self, role_id, role):
-        ref_dict = self._get_role(role_id)
-        for key in role:
-            ref_dict[key] = role[key]
-        ref_id = ref_dict.pop('id')
-        model_dict = RoleModel.get_model_dict(ref_dict)
-        RoleModel.objects(id=ref_id).update(**model_dict)
-        model_dict['id'] = ref_id
+        #primary key update not permitted
+        if 'id' in role:
+            del role['id']
+        model_dict = RoleModel.get_model_dict(role)
+        RoleModel.objects(id=role_id).update(**model_dict)
+        model_dict['id'] = role_id
         return model_dict
 
     def delete_role(self, role_id):
