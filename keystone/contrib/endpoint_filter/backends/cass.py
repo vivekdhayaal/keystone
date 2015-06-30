@@ -48,7 +48,7 @@ class EndpointProject(cass.ExtrasModel):
     """Project-endpoint relationship table.
 
     Endpoint ID is the Partition key, Project ID is the clustering column."""
-    __table_name__ = 'project_endpoint'
+    __table_name__ = 'endpoint_project'
     endpoint_id = columns.Text(primary_key=True, max_length=64)
     project_id = columns.Text(primary_key=True, max_length=64)
 
@@ -64,7 +64,7 @@ class EndpointGroup(cass.ExtrasModel):
 
 class EndpointGroupProject(cass.ExtrasModel):
     """Project to Endpoint group relationship table."""
-    __table_name__ = 'project_endpoint_group'
+    __table_name__ = 'endpoint_group_project'
     endpoint_group_id = columns.Text(primary_key=True, max_length=64)
     project_id = columns.Text(primary_key=True, max_length=64)
 
@@ -243,9 +243,9 @@ class EndpointFilter(object):
         pass
 
     def delete_endpoint_group_association_by_project(self, project_id):
-        refs = EndpointGroupProject.objects.filter(project_id=project_id)
+        refs = ProjectEndpointGroup.objects.filter(project_id=project_id)
         with BatchQuery(batch_type=BatchType.Unlogged) as b:
             for ref in refs:
-                ProjectEndpointGroup(project_id=project_id,
-                    endpoint_group_id=refs.endpoint_group_id).batch(b).delete()
+                EndpointGroupProject(project_id=project_id,
+                    endpoint_group_id=ref.endpoint_group_id).batch(b).delete()
                 ref.batch(b).delete()
