@@ -35,3 +35,6 @@ dogpile.cache>=0.5.4
 jsonschema!=2.5.0,<3.0.0,>=2.0.0
 pycadf>=0.8.0
 msgpack-python>=0.4.0
+
+cassandra-driver
+blist
