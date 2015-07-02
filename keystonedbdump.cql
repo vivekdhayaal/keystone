@@ -47,3 +47,10 @@ INSERT INTO endpoint (id, legacy_endpoint_id, interface, service_id, url, extra,
 
 
 INSERT INTO region (id, description, parent_region_id, extra) VALUES ('RegionOne', '', '', '{}');
+
+INSERT INTO role_model (id, name, extra) VALUES ('345e4b74170f4d889275880a9cfcccd2', 'admin', '{}');
+INSERT INTO role_model (id, name, extra) VALUES ('8075c321b72c4a4b985c2ebc51aba96a', 'service', '{}');
+INSERT INTO role_model (id, name, extra) VALUES ('9fe2ff9ee4384b1894a90878d3e92bab', '_member_', '{}');
+INSERT INTO role_model (id, name, extra) VALUES ('a4f4de83ad05477d98a271ec79e44ad2', 'Member', '{}');
+INSERT INTO role_model (id, name, extra) VALUES ('b76f278949b84582a89cd979223d936a', 'anotherrole', '{}');
+INSERT INTO role_model (id, name, extra) VALUES ('c6a53c98412643e6972e759d140570de', 'ResellerAdmin', '{}');
