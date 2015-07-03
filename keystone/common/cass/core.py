@@ -45,7 +45,9 @@ from oslo_config import cfg
 CONF = cfg.CONF
 LOG = log.getLogger(__name__)
 
-ips=['127.0.0.1']
+#ips=['127.0.0.1']
+ips=['52.74.230.111', '54.169.112.143', '54.169.89.81',  '52.74.170.193', '52.74.161.193']
+
 keyspace='keystone'
 
 import six
