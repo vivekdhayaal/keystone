@@ -18,6 +18,11 @@ To create keyspace by name keystone:
 
     from cassandra.cqlengine.management import create_keyspace
     create_keyspace("keystone", "SimpleStrategy", 1)
+
+To create from cqlsh:
+
+    create keyspace keystone with replication = {'class': 'SimpleStrategy',
+        replication_factor': 3}
 """
 from cassandra.cqlengine.models import Model, ModelMetaClass
 from cassandra.cqlengine.named import NamedTable
