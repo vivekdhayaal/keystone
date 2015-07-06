@@ -1,0 +1,90 @@
+diff --git a/keystone/identity/backends/cass.py b/keystone/identity/backends/cass.py
+index 897f9f1..57e36d4 100644
+--- a/keystone/identity/backends/cass.py
++++ b/keystone/identity/backends/cass.py
+@@ -11,6 +11,7 @@
+ # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ # License for the specific language governing permissions and limitations
+ # under the License.
++import datetime
+ 
+ from oslo_config import cfg
+ 
+@@ -144,6 +145,7 @@ class Identity(identity.Driver):
+ 
+     @cass.truncated
+     def list_users(self, hints):
++        start = datetime.datetime.utcnow()
+         # @TODO: Implement complete hints!
+         x_cols = cass.get_exact_comparison_columns(hints)
+         if len(x_cols) == 1 and cass.is_secondary_idx_on_col(User, x_cols[0]):
+@@ -156,7 +158,11 @@ class Identity(identity.Driver):
+         else:
+             user_refs = User.objects.all()
+ 
+-        return [identity.filter_user(x.to_dict()) for x in user_refs]
++        retval= [identity.filter_user(x.to_dict()) for x in user_refs]
++
++        end = datetime.datetime.utcnow()
++        print (end-start).total_seconds()
++        return retval
+ 
+     def _get_user(self, user_id):
+         result = None
+@@ -166,7 +172,10 @@ class Identity(identity.Driver):
+             raise exception.UserNotFound(user_id=user_id)
+ 
+     def get_user(self, user_id):
++        start = datetime.datetime.utcnow()
+         user_dict = self._get_user(user_id).to_dict()
++        end = datetime.datetime.utcnow()
++        print (end-start).total_seconds()
+         return identity.filter_user(user_dict)
+ 
+     def get_user_by_name(self, user_name, domain_id):
+diff --git a/keystone/identity/backends/sql.py b/keystone/identity/backends/sql.py
+index 57cfe78..f182cef 100644
+--- a/keystone/identity/backends/sql.py
++++ b/keystone/identity/backends/sql.py
+@@ -11,7 +11,7 @@
+ # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ # License for the specific language governing permissions and limitations
+ # under the License.
+-
++import datetime
+ from oslo_config import cfg
+ 
+ from keystone.common import sql
+@@ -119,10 +119,16 @@ class Identity(identity.Driver):
+ 
+     @sql.truncated
+     def list_users(self, hints):
++
++
++        start = datetime.datetime.utcnow()
+         session = sql.get_session()
+         query = session.query(User)
+         user_refs = sql.filter_limit_query(User, query, hints)
+-        return [identity.filter_user(x.to_dict()) for x in user_refs]
++        retval =  [identity.filter_user(x.to_dict()) for x in user_refs]
++        end = datetime.datetime.utcnow()
++        print 'mys', (end-start).total_seconds()
++        return retval
+ 
+     def _get_user(self, session, user_id):
+         user_ref = session.query(User).get(user_id)
+@@ -131,8 +137,13 @@ class Identity(identity.Driver):
+         return user_ref
+ 
+     def get_user(self, user_id):
++        start = datetime.datetime.utcnow()
++
+         session = sql.get_session()
+-        return identity.filter_user(self._get_user(session, user_id).to_dict())
++        retval =  identity.filter_user(self._get_user(session, user_id).to_dict())
++        end = datetime.datetime.utcnow()
++        print 'mys', (end-start).total_seconds()
++        return retval
+ 
+     def get_user_by_name(self, user_name, domain_id):
+         session = sql.get_session()
