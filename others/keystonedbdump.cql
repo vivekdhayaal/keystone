@@ -1,5 +1,7 @@
 Data to insert into Cassandra, equivalent to present in keystonedbdump file
 
+MAKE SURE YOU CHANGE THE ENDPOINT IP BEFORE INSERTING THE DATA
+
 
 INSERT INTO user (id, default_project_id, domain_id, enabled, extra, name, password) VALUES ( '90f0471df5a749e59e997f772b146b07', NULL, 'default', True, '{"email": "demo@example.com"}', 'demo', '$6$rounds=40000$5Y2F4aQVM9I6N0xX$GcgsL3QoZG8MkPCngRyU6mykw.SeF3IqCmAU4TUA.QkzNiq9SihYQSDXVPY1TEFvcGhadL2JG1Dmz6OGxEIKA/');
 INSERT INTO user (id, default_project_id, domain_id, enabled, extra, name, password) VALUES ( 'cf1f87101f8d4e8a92dc8a5a7cfa319e', NULL, 'default', True, '{"email": null}', 'admin', '$6$rounds=40000$mYA6Iwpl6dm.ijML$swgnT0JM/lLoagtwnY.JL/e24TRh97koMIO/Gx9tDHajzeZpuEXQKLcYJ0.DQoVxIpCCPV0xKME6llo73oqhz/');
@@ -41,9 +43,16 @@ INSERT INTO domain_gsi_name (name, domain_id) VALUES ('Default', 'default');
 INSERT INTO service (id, type, enabled, extra) VALUES ('58138146b86b4627bd6500856826a5d8', 'identity', True, '{"name": "keystone", "description": "Keystone Identity Service"}');
 
 
-INSERT INTO endpoint (id, legacy_endpoint_id, interface, service_id, url, extra, enabled, region_id) VALUES ('01092d12a8064c7caccba2b5b9e5f24f', '59fdfb5a5c884451afe2e520f8020785', 'public', '58138146b86b4627bd6500856826a5d8', 'http://10.0.2.15:5000/v2.0', '{}', True, 'RegionOne');
-INSERT INTO endpoint (id, legacy_endpoint_id, interface, service_id, url, extra, enabled, region_id) VALUES ('7b5fa9a506824b8a8970720ab126e198', '59fdfb5a5c884451afe2e520f8020785', 'admin', '58138146b86b4627bd6500856826a5d8', 'http://10.0.2.15:35357/v2.0', '{}', True, 'RegionOne');
-INSERT INTO endpoint (id, legacy_endpoint_id, interface, service_id, url, extra, enabled, region_id) VALUES ('c4b8ecbc073e47e6b194552754e1e575', '59fdfb5a5c884451afe2e520f8020785', 'internal', '58138146b86b4627bd6500856826a5d8', 'http://10.0.2.15:5000/v2.0', '{}', True, 'RegionOne');
+INSERT INTO endpoint (id, legacy_endpoint_id, interface, service_id, url, extra, enabled, region_id) VALUES ('01092d12a8064c7caccba2b5b9e5f24f', '59fdfb5a5c884451afe2e520f8020785', 'public', '58138146b86b4627bd6500856826a5d8', 'http://172.31.25.98:5000/v2.0', '{}', True, 'RegionOne');
+INSERT INTO endpoint (id, legacy_endpoint_id, interface, service_id, url, extra, enabled, region_id) VALUES ('7b5fa9a506824b8a8970720ab126e198', '59fdfb5a5c884451afe2e520f8020785', 'admin', '58138146b86b4627bd6500856826a5d8', 'http://172.31.25.98:35357/v2.0', '{}', True, 'RegionOne');
+INSERT INTO endpoint (id, legacy_endpoint_id, interface, service_id, url, extra, enabled, region_id) VALUES ('c4b8ecbc073e47e6b194552754e1e575', '59fdfb5a5c884451afe2e520f8020785', 'internal', '58138146b86b4627bd6500856826a5d8', 'http://172.31.25.98:5000/v2.0', '{}', True, 'RegionOne');
 
 
 INSERT INTO region (id, description, parent_region_id, extra) VALUES ('RegionOne', '', '', '{}');
+
+INSERT INTO role_model (id, name, extra) VALUES ('345e4b74170f4d889275880a9cfcccd2', 'admin', '{}');
+INSERT INTO role_model (id, name, extra) VALUES ('8075c321b72c4a4b985c2ebc51aba96a', 'service', '{}');
+INSERT INTO role_model (id, name, extra) VALUES ('9fe2ff9ee4384b1894a90878d3e92bab', '_member_', '{}');
+INSERT INTO role_model (id, name, extra) VALUES ('a4f4de83ad05477d98a271ec79e44ad2', 'Member', '{}');
+INSERT INTO role_model (id, name, extra) VALUES ('b76f278949b84582a89cd979223d936a', 'anotherrole', '{}');
+INSERT INTO role_model (id, name, extra) VALUES ('c6a53c98412643e6972e759d140570de', 'ResellerAdmin', '{}');
