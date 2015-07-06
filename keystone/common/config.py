@@ -28,7 +28,10 @@ FILE_OPTIONS = {
         cfg.StrOpt('local_datacenter', default=None,
                    help='The nearest datacenter containing cassandra db '
                         'nodes that this keystone service instance should '
-                        'fetch/store data to.'),
+                        'fetch/store data to. Provide the name '
+                        'assigned to the datacenter while configuring '
+                        'your Cassandra cluster (can be seen by running '
+                        '"nodetool status" command).),
         cfg.StrOpt('admin_token', secret=True, default='ADMIN',
                    help='A "shared secret" that can be used to bootstrap '
                         'Keystone. This "token" does not represent a user, '
