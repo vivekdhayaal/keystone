@@ -71,7 +71,7 @@ class Endpoint(cass.ExtrasModel):
     enabled = columns.Boolean(default=True, index=True)
     extra = columns.Text()
 
-cass.connect_to_cluster(cass.ips, cass.keyspace)
+cass.connect_to_cluster()
 
 sync_table(Region)
 sync_table(Endpoint)
