@@ -45,8 +45,6 @@ from oslo_config import cfg
 CONF = cfg.CONF
 LOG = log.getLogger(__name__)
 
-#ips=['127.0.0.1']
-ips=['52.74.230.111', '54.169.112.143', '54.169.89.81',  '52.74.170.193', '52.74.161.193']
 
 keyspace='keystone'
 
@@ -209,11 +207,15 @@ class QuorumFallBackRetryPolicy(RetryPolicy):
             else:
                 return (self.RETHROW, None)
 
-def connect_to_cluster(ips, keyspace):
+def connect_to_cluster():
     if CONF.local_datacenter is not None:
         policy = DCAwareRoundRobinPolicy(local_dc=CONF.local_datacenter)
     else:
         policy = DCAwareRoundRobinPolicy()
+    if CONF.cassandra_nodes_ips is not None:
+        ips = CONF.cassandra_nodes_ips.split(",")
+    else:
+        ips = ['127.0.0.1']
     return connection.setup(ips, keyspace, consistency = ConsistencyLevel.LOCAL_QUORUM, 
                             load_balancing_policy = TokenAwarePolicy(policy),
                             default_retry_policy = QuorumFallBackRetryPolicy())

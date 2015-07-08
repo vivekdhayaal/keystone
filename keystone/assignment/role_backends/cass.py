@@ -86,7 +86,7 @@ class RoleModel(cass.ExtrasModel):
     name = columns.Text(max_length=255, required=True)
     extra = columns.Text(default='')
 
-cass.connect_to_cluster(cass.ips, cass.keyspace)
+cass.connect_to_cluster()
 
 sync_table(RoleModel)
 

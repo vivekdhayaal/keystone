@@ -82,7 +82,7 @@ class GroupMembership(cass.ExtrasModel):
     group_id = columns.Text(primary_key=True, max_length=64)
     user_id = columns.Text(primary_key=True, clustering_order="DESC", max_length=64)
 
-cass.connect_to_cluster(cass.ips, cass.keyspace)
+cass.connect_to_cluster()
 
 sync_table(User)
 sync_table(DomainIdUserNameToUserId)
