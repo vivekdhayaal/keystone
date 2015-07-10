@@ -129,6 +129,17 @@ class Identity(identity.Driver):
     # user crud
 
     def create_user(self, user_id, user):
+        # First check if a user already exists with the same name
+        # for the same domain. We shouldn't be allowing this.
+        try:
+            DomainIdUserNameToUserId.objects.filter(domain_id=user['domain_id'],
+                    name=user['name'])
+            msg = ('User with name %s already exists in domain %s'
+                    % (user['name'], user['domain_id']))
+            raise exception.Conflict(type='user', details=msg)
+        except DoesNotExist:
+            pass
+
         mapping_dict = user
         mapping_dict['user_id'] = user['id']
         mapping_ref = DomainIdUserNameToUserId.get_model_dict(mapping_dict,
