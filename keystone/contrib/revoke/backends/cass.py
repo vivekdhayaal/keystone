@@ -47,7 +47,7 @@ class RevocationEvent(cass.ExtrasModel):
     audit_id = columns.Text(max_length=32)
     audit_chain_id = columns.Text(max_length=32)
 
-cass.connect_to_cluster(cass.ips, cass.keyspace)
+cass.connect_to_cluster()
 
 sync_table(RevocationEvent)
 

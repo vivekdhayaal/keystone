@@ -47,7 +47,7 @@ class TrustModel(cass.ExtrasModel):
     extra = columns.Text(default='')
     roles = columns.Set(columns.Text)
 
-cass.connect_to_cluster(cass.ips, cass.keyspace)
+cass.connect_to_cluster()
 
 sync_table(TrustModel)
 

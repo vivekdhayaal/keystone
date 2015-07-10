@@ -30,7 +30,7 @@ class PolicyAssociation(cass.ExtrasModel):
                              index=True, max_length=64, default='null')
     policy_id = columns.Text(required=True, index=True, max_length=64)
 
-cass.connect_to_cluster(cass.ips, cass.keyspace)
+cass.connect_to_cluster()
 
 sync_table(PolicyAssociation)
 

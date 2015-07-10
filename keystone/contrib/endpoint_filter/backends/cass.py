@@ -75,7 +75,7 @@ class ProjectEndpointGroup(cass.ExtrasModel):
     project_id = columns.Text(primary_key=True, max_length=64)
     endpoint_group_id = columns.Text(primary_key=True, max_length=64)
 
-cass.connect_to_cluster(cass.ips, cass.keyspace)
+cass.connect_to_cluster()
 
 sync_table(ProjectEndpoint)
 sync_table(EndpointProject)
