@@ -59,8 +59,6 @@ class EndpointGroup(cass.ExtrasModel):
     id = columns.Text(primary_key=True, max_length=64)
     name = columns.Text(max_length=255)
     description = columns.Text()
-    name = columns.Text()
-
 
 class EndpointGroupProject(cass.ExtrasModel):
     """Project to Endpoint group relationship table."""
