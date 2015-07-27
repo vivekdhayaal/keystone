@@ -132,7 +132,7 @@ class Identity(identity.Driver):
         # First check if a user already exists with the same name
         # for the same domain. We shouldn't be allowing this.
         try:
-            DomainIdUserNameToUserId.objects.filter(domain_id=user['domain_id'],
+            DomainIdUserNameToUserId.objects.get(domain_id=user['domain_id'],
                     name=user['name'])
             msg = ('User with name %s already exists in domain %s'
                     % (user['name'], user['domain_id']))
