@@ -221,9 +221,9 @@ def connect_to_cluster():
     else:
         # assuming keyspace name 'keystone'
         keyspace = 'keystone'
-    consistencyl = ConsistencyLevel.name_to_value.get(CONF.cassandra_consistency)
-    if consistencyl is None:
-        consistencyl = ConsistencyLevel.LOCAL_QUORUM
-    return connection.setup(ips, keyspace, consistency = consistencyl, 
+    consistency_level = ConsistencyLevel.name_to_value.get(CONF.cassandra_consistency)
+    if consistency_level is None:
+        consistency_level = ConsistencyLevel.LOCAL_QUORUM
+    return connection.setup(ips, keyspace, consistency = consistency_level, 
                             load_balancing_policy = TokenAwarePolicy(policy),
                             default_retry_policy = QuorumFallBackRetryPolicy())
