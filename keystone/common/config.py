@@ -34,6 +34,10 @@ FILE_OPTIONS = {
                         '"nodetool status" command).'),
         cfg.StrOpt('cassandra_nodes_ips', default=None,
                    help='The list of ips of cassandra db nodes'),
+        cfg.StrOpt('cassandra_keyspace', default=None,
+                    help='the cassandra keyspace pertaining to keystone'),
+        cfg.StrOpt('cassandra_consistency', default=None,
+                    help='the consistency level for cassandra queries'),
         cfg.StrOpt('admin_token', secret=True, default='ADMIN',
                    help='A "shared secret" that can be used to bootstrap '
                         'Keystone. This "token" does not represent a user, '

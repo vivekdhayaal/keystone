@@ -46,7 +46,6 @@ CONF = cfg.CONF
 LOG = log.getLogger(__name__)
 
 
-keyspace='keystone'
 
 import six
 
@@ -215,7 +214,16 @@ def connect_to_cluster():
     if CONF.cassandra_nodes_ips is not None:
         ips = CONF.cassandra_nodes_ips.split(",")
     else:
+        # assuming localhost ip
         ips = ['127.0.0.1']
-    return connection.setup(ips, keyspace, consistency = ConsistencyLevel.LOCAL_QUORUM, 
+    if CONF.cassandra_keyspace is not None:
+        keyspace = CONF.cassandra_keyspace
+    else:
+        # assuming keyspace name 'keystone'
+        keyspace = 'keystone'
+    consistencyl = ConsistencyLevel.name_to_value.get(CONF.cassandra_consistency)
+    if consistencyl is None:
+        consistencyl = ConsistencyLevel.LOCAL_QUORUM
+    return connection.setup(ips, keyspace, consistency = consistencyl, 
                             load_balancing_policy = TokenAwarePolicy(policy),
                             default_retry_policy = QuorumFallBackRetryPolicy())

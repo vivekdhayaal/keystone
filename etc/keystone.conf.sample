@@ -11,7 +11,14 @@
 #
 # the list of ips of cassandra db nodes
 # cassandra_nodes_ips = 1.2.3.4,5.6.7.8
-
+#
+# the cassandra keyspace pertaining to keystone
+# cassandra_keyspace = keystone
+#
+# the consistency level for cassandra queries
+# valid values are available @
+# https://datastax.github.io/python-driver/api/cassandra.html#cassandra.ConsistencyLevel
+# cassandra_consistency = LOCAL_QUORUM
 #
 # A "shared secret" that can be used to bootstrap Keystone. This "token" does
 # not represent a user, and carries no explicit authorization. To disable in
