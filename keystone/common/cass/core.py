@@ -45,6 +45,11 @@ from oslo_config import cfg
 CONF = cfg.CONF
 LOG = log.getLogger(__name__)
 
+if CONF.cassandra_keyspace is not None:
+    keyspace = CONF.cassandra_keyspace
+else:
+    # assuming keyspace name 'keystone'
+    keyspace = 'keystone'
 
 
 import six
@@ -216,11 +221,6 @@ def connect_to_cluster():
     else:
         # assuming localhost ip
         ips = ['127.0.0.1']
-    if CONF.cassandra_keyspace is not None:
-        keyspace = CONF.cassandra_keyspace
-    else:
-        # assuming keyspace name 'keystone'
-        keyspace = 'keystone'
     consistency_level = ConsistencyLevel.name_to_value.get(CONF.cassandra_consistency)
     if consistency_level is None:
         consistency_level = ConsistencyLevel.LOCAL_QUORUM
