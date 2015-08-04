@@ -44,6 +44,7 @@ MEMOIZE = cache.get_memoization_decorator(section='identity')
 DOMAIN_CONF_FHEAD = 'keystone.'
 DOMAIN_CONF_FTAIL = '.conf'
 
+CORE_VERSION = 12
 
 def filter_user(user_ref):
     """Filter out private items in a user dict.
@@ -1064,7 +1065,47 @@ class Manager(manager.Manager):
         self.update_user(user_id, update_dict)
 
 
-@six.add_metaclass(abc.ABCMeta)
+class Compatiblizer(object):
+    def __init__(self):
+        global CORE_VERSION
+        self.CORE_VERSION = CORE_VERSION
+
+    def fall_back(self, driver, func, *args, **kwargs):
+        return func(driver, *args, **kwargs)
+
+
+def compatiblize(func):
+    def wrapper(self, *args, **kwargs):
+        if int(self.compatiblizer.CORE_VERSION) == int(self.DRIVER_VERSION) + 1:
+            try:
+                compatiblizerMethod = getattr(self.compatiblizer, func.func_name)
+                return compatiblizerMethod(self, func, *args, **kwargs)
+            except AttributeError:
+                # developer missed to implement compatibility code
+                # should we conclude that 
+                # should we exit or fall back to existing method
+                raise exception.NotImplemented()  # pragma: no cover
+                #return self.compatiblizer.fall_back(self, func, *args, **kwargs)
+        elif self.compatiblizer.CORE_VERSION == self.DRIVER_VERSION:
+            return func(self, *args, **kwargs)
+        else:
+            raise Exception("incompatible driver")
+    return wrapper
+
+
+class CompatiblizerMeta(abc.ABCMeta):
+    def __new__(mcl, name, bases, attrs):
+        # decorate only abstract methods in Driver
+        if name is not 'Driver':
+            for key in attrs:
+                if key in bases[0].__abstractmethods__:
+                    val = attrs[key]
+                    attrs[key] = compatiblize(val)
+            attrs["compatiblizer"] = Compatiblizer()
+        return super(CompatiblizerMeta, mcl).__new__(mcl, name, bases, attrs)
+
+
+@six.add_metaclass(CompatiblizerMeta)
 class Driver(object):
     """Interface description for an Identity driver."""
 
