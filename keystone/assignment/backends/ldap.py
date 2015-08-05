@@ -33,6 +33,8 @@ LOG = log.getLogger(__name__)
 
 
 class Assignment(assignment.Driver):
+    DRIVER_VERSION = 12
+
     @versionutils.deprecated(
         versionutils.deprecated.KILO,
         remove_in=+2,

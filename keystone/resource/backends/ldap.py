@@ -32,6 +32,8 @@ LOG = log.getLogger(__name__)
 
 
 class Resource(resource.Driver):
+    DRIVER_VERSION = 12
+
     def __init__(self):
         super(Resource, self).__init__()
         self.LDAP_URL = CONF.ldap.url

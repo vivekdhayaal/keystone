@@ -229,9 +229,19 @@ class Manager(object):
         return f
 
 
-@six.add_metaclass(abc.ABCMeta)
+class Compatibilizer(object):
+    # class containing compatibility code
+    # (to be provided by the developer that is proposing the change)
+    # to ensure that keystone will work with drivers implementing
+    # either the current version of the interface or the previous one
+    pass
+
+
+@six.add_metaclass(manager.CompatibilizerMeta)
 class Driver(object):
     """Interface description for a Token driver."""
+    INTERFACE_VERSION = 12
+    COMPATIBILIZER = Compatibilizer
 
     @abc.abstractmethod
     def get_token(self, token_id):

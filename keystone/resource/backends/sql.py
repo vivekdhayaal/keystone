@@ -25,6 +25,7 @@ LOG = log.getLogger(__name__)
 
 
 class Resource(keystone_resource.Driver):
+    DRIVER_VERSION = 12
 
     def default_assignment_driver(self):
         return 'sql'

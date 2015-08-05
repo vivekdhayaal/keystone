@@ -453,6 +453,16 @@ class MultipleSQLDriversInConfig(UnexpectedError):
                        'permitted): %(source)s.')
 
 
+class IncompatibleInterface(UnexpectedError):
+    message_format = _('Driver interfaces should be backward compatible '
+                       'with previous version of driver implementations')
+
+
+class IncompatibleDriver(UnexpectedError):
+    message_format = _('The driver specified in configuration is incompatible'
+                       ' with this version of keystone')
+
+
 class MigrationNotProvided(Exception):
     def __init__(self, mod_name, path):
         super(MigrationNotProvided, self).__init__(_(

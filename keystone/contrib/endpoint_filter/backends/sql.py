@@ -53,6 +53,7 @@ class ProjectEndpointGroupMembership(sql.ModelBase, sql.ModelDictMixin):
 
 
 class EndpointFilter(object):
+    DRIVER_VERSION = 12
 
     @sql.handle_conflicts(conflict_type='project_endpoint')
     def add_endpoint_to_project(self, endpoint_id, project_id):

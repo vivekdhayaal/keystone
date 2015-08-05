@@ -30,6 +30,7 @@ class CredentialModel(sql.ModelBase, sql.DictBase):
 
 
 class Credential(credential.Driver):
+    DRIVER_VERSION = 12
 
     # credential crud
 

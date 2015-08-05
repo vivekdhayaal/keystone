@@ -22,6 +22,7 @@ CONF = cfg.CONF
 
 
 class Token(kvs.Token):
+    DRIVER_VERSION = 12
     kvs_backend = 'openstack.kvs.Memcached'
     memcached_backend = 'memcached'
 

@@ -1064,9 +1064,19 @@ class Manager(manager.Manager):
         self.update_user(user_id, update_dict)
 
 
-@six.add_metaclass(abc.ABCMeta)
+class Compatibilizer(object):
+    # class containing compatibility code
+    # (to be provided by the developer that is proposing the change)
+    # to ensure that keystone will work with drivers implementing
+    # either the current version of the interface or the previous one
+    pass
+
+
+@six.add_metaclass(manager.CompatibilizerMeta)
 class Driver(object):
     """Interface description for an Identity driver."""
+    INTERFACE_VERSION = 12
+    COMPATIBILIZER = Compatibilizer
 
     def _get_list_limit(self):
         return CONF.identity.list_limit or CONF.list_limit
@@ -1289,9 +1299,19 @@ class MappingManager(manager.Manager):
         super(MappingManager, self).__init__(CONF.identity_mapping.driver)
 
 
-@six.add_metaclass(abc.ABCMeta)
+class MappingCompatibilizer(object):
+    # class containing compatibility code
+    # (to be provided by the developer that is proposing the change)
+    # to ensure that keystone will work with drivers implementing
+    # either the current version of the interface or the previous one
+    pass
+
+
+@six.add_metaclass(manager.CompatibilizerMeta)
 class MappingDriver(object):
     """Interface description for an ID Mapping driver."""
+    INTERFACE_VERSION = 12
+    COMPATIBILIZER = MappingCompatibilizer
 
     @abc.abstractmethod
     def get_public_id(self, local_entity):

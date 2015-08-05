@@ -25,6 +25,8 @@ CONF = cfg.CONF
 
 @dependency.requires('endpoint_filter_api')
 class EndpointFilterCatalog(sql.Catalog):
+    DRIVER_VERSION = 12
+
     def get_v3_catalog(self, user_id, project_id):
         substitutions = dict(CONF.items())
         substitutions.update({'tenant_id': project_id, 'user_id': user_id})

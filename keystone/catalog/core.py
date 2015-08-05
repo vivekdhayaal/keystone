@@ -277,9 +277,19 @@ class Manager(manager.Manager):
             raise exception.NotFound('Catalog not found for user and tenant')
 
 
-@six.add_metaclass(abc.ABCMeta)
+class Compatibilizer(object):
+    # class containing compatibility code
+    # (to be provided by the developer that is proposing the change)
+    # to ensure that keystone will work with drivers implementing
+    # either the current version of the interface or the previous one
+    pass
+
+
+@six.add_metaclass(manager.CompatibilizerMeta)
 class Driver(object):
     """Interface description for an Catalog driver."""
+    INTERFACE_VERSION = 12
+    COMPATIBILIZER = Compatibilizer
 
     def _get_list_limit(self):
         return CONF.catalog.list_limit or CONF.list_limit

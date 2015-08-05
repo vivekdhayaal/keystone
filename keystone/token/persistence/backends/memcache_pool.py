@@ -19,6 +19,7 @@ CONF = cfg.CONF
 
 
 class Token(memcache.Token):
+    DRIVER_VERSION = 12
     memcached_backend = 'pooled_memcached'
 
     def __init__(self, *args, **kwargs):

@@ -12,12 +12,15 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import abc
 import functools
 
 from oslo_log import log
 from oslo_log import versionutils
 from oslo_utils import importutils
 import stevedore
+
+from keystone import exception
 
 
 LOG = log.getLogger(__name__)
@@ -104,3 +107,51 @@ class Manager(object):
         f = getattr(self.driver, name)
         setattr(self, name, f)
         return f
+
+
+class CompatibilizerMeta(abc.ABCMeta):
+    def __new__(metaclass, name, bases, attrs):
+        INTERFACE_VERSION = None
+        for cls in bases:
+            try:
+                INTERFACE_VERSION = int(cls.INTERFACE_VERSION)
+                driverABC = cls
+                break
+            except AttributeError:
+                # not a driver interface
+                pass
+
+        if INTERFACE_VERSION is not None:
+            # code pertaining to driver implementations alone.
+            # the following six lines of code are temporarily added
+            # to ensure that existing drivers will work with next
+            # release(VERSION=12); so these should be removed thereafter.
+            DRIVER_VERSION = attrs.get("DRIVER_VERSION")
+            if DRIVER_VERSION is None and INTERFACE_VERSION == 12:
+                DRIVER_VERSION = 12
+                LOG.debug('Warning: Version not specified in driver.'
+                          'Such drivers would be supported only in this '
+                          'release(version=12)')
+            try:
+                DRIVER_VERSION = int(DRIVER_VERSION)
+            except TypeError:
+                raise exception.IncompatibleDriver()
+            if INTERFACE_VERSION == DRIVER_VERSION:
+                # no compatibility issues
+                pass
+            elif INTERFACE_VERSION == DRIVER_VERSION + 1:
+                # introduce the compatibility class for backward compatibility
+                import inspect
+                for tup in inspect.getmembers(driverABC.COMPATIBILIZER,
+                                              predicate=inspect.ismethod):
+                    attrs[tup[0]] = tup[1]
+                for key in driverABC.__abstractmethods__:
+                    if key not in attrs:
+                        # developer missed to write compatibility code
+                        # for not-implemented abstract method of driver
+                        raise exception.IncompatibleInterface()
+            else:
+                # older versions are not supported
+                raise exception.IncompatibleDriver()
+        return super(CompatibilizerMeta, metaclass).__new__(metaclass, name,
+                                                            bases, attrs)

@@ -40,6 +40,7 @@ class Token(token.persistence.Driver):
     memcached) for the Token backend.  It is recommended to only use the base
     in-memory implementation for testing purposes.
     """
+    DRIVER_VERSION = 12
 
     revocation_key = 'revocation-list'
     kvs_backend = 'openstack.kvs.Memory'

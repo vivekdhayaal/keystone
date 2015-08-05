@@ -156,6 +156,7 @@ class ServiceProviderModel(sql.ModelBase, sql.DictBase):
 
 
 class Federation(core.Driver):
+    DRIVER_VERSION = 12
 
     # Identity Provider CRUD
     @sql.handle_conflicts(conflict_type='identity_provider')

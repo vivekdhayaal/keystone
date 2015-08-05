@@ -37,6 +37,7 @@ class IDMapping(sql.ModelBase, sql.ModelDictMixin):
 
 @dependency.requires('id_generator_api')
 class Mapping(identity.MappingDriver):
+    DRIVER_VERSION = 12
 
     def get_public_id(self, local_entity):
         # NOTE(henry-nash): Since the Public ID is regeneratable, rather

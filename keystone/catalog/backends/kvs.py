@@ -19,6 +19,8 @@ from keystone.common import kvs
 
 
 class Catalog(kvs.Base, catalog.Driver):
+    DRIVER_VERSION = 12
+
     # Public interface
     def get_catalog(self, user_id, tenant_id):
         return self.db.get('catalog-%s-%s' % (tenant_id, user_id))

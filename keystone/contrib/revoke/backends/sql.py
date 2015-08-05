@@ -39,6 +39,8 @@ class RevocationEvent(sql.ModelBase, sql.ModelDictMixin):
 
 
 class Revoke(revoke.Driver):
+    DRIVER_VERSION = 12
+
     def _flush_batch_size(self, dialect):
         batch_size = 0
         if dialect == 'ibm_db_sa':
