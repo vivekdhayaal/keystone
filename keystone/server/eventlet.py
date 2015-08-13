@@ -91,6 +91,7 @@ def serve(*servers):
                 'name': name})
             raise
 
+    print('CHECK TWO TWO TWO')
     # notify calling process we are ready to serve
     systemd.notify_once()
 
@@ -153,4 +154,6 @@ def run(possible_topdir):
 
     _unused, servers = common.setup_backends(
         startup_application_fn=create_servers)
+    print('CHECK ONE ONE ONE')
+    print('CHECK ONE ONE ONE')
     serve(*servers)

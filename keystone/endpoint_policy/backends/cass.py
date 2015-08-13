@@ -30,9 +30,9 @@ class PolicyAssociation(cass.ExtrasModel):
                              index=True, max_length=64, default='null')
     policy_id = columns.Text(required=True, index=True, max_length=64)
 
-cass.connect_to_cluster()
+#cass.connect_to_cluster()
 
-sync_table(PolicyAssociation)
+#sync_table(PolicyAssociation)
 
 # (endpoint_id, service_id, region_id) together form the primary key.
 # But they aren't mandatory params. So, when any of them aren't provided,

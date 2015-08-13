@@ -305,6 +305,16 @@ class ProcessLauncher(object):
 
         pid = os.fork()
         if pid == 0:
+            print 'child started now'
+            print os.getpid()
+            print os.getppid()
+            from keystone.common.cass import connect_to_cluster
+            from cassandra.cqlengine.connection import cluster as cql_cluster, session as cql_session
+            if cql_cluster is not None:
+                cql_cluster.shutdown()
+            if cql_session is not None:
+                cql_session.shutdown()
+            connect_to_cluster()
             launcher = self._child_process(wrap.service)
             while True:
                 self._child_process_handle_signal()
@@ -319,6 +329,72 @@ class ProcessLauncher(object):
 
         wrap.children.add(pid)
         self.children[pid] = wrap
+
+        print('THREEEEE ================')
+        print os.getpid()
+        #from keystone.common.cass import connect_to_cluster
+        #from cassandra.cqlengine.connection import cluster as cql_cluster, session as cql_session
+        #if cql_cluster is not None:
+        #    cql_cluster.shutdown()
+        #if cql_session is not None:
+        #    cql_session.shutdown()
+        #connect_to_cluster()
+
+        #from cassandra.cqlengine.management import sync_table
+
+        #from keystone.credential.backends.cass import CredentialModel
+        #from keystone.catalog.backends.cass import Region
+        #from keystone.catalog.backends.cass import Endpoint
+        #from keystone.catalog.backends.cass import Service
+        #from keystone.trust.backends.cass import TrustModel
+        #from keystone.contrib.endpoint_filter.backends.cass import ProjectEndpoint, EndpointProject, EndpointGroup, ProjectEndpointGroup, EndpointGroupProject
+        #from keystone.contrib.revoke.backends.cass import RevocationEvent
+        #from keystone.endpoint_policy.backends.cass import PolicyAssociation
+        #from keystone.resource.backends.cass import Domain, DomainGSIName, Project, ProjectGSINameDomainId
+        #from keystone.identity.mapping_backends.cass import IDMapping, IDMappingGSI
+        #from keystone.identity.backends.cass import User, DomainIdUserNameToUserId, Group, DomainIdGroupNameToGroupId, UserGroups, GroupMembership
+        #from keystone.assignment.role_backends.cass import RoleModel
+        #from keystone.assignment.backends.cass import RoleAssignment
+        ##from keystone.credential.backends.cass import CredentialModel
+        ##from keystone.credential.backends.cass import CredentialModel
+        ##from keystone.credential.backends.cass import CredentialModel
+        ##from keystone.credential.backends.cass import CredentialModel
+        ##from keystone.credential.backends.cass import CredentialModel
+        ##from keystone.credential.backends.cass import CredentialModel
+        ##from keystone.credential.backends.cass import CredentialModel
+        ##from keystone.credential.backends.cass import CredentialModel
+        ##from keystone.credential.backends.cass import CredentialModel
+        ##from keystone.credential.backends.cass import CredentialModel
+        ##from keystone.credential.backends.cass import CredentialModel
+        ##from keystone.credential.backends.cass import CredentialModel
+        ##from keystone.credential.backends.cass import CredentialModel
+        #sync_table(CredentialModel)
+        #sync_table(Region)
+        #sync_table(Endpoint)
+        #sync_table(Service)
+        #sync_table(TrustModel)
+        #sync_table(ProjectEndpoint)
+        #sync_table(EndpointProject)
+        #sync_table(EndpointGroup)
+        #sync_table(ProjectEndpointGroup)
+        #sync_table(EndpointGroupProject)
+        #sync_table(RevocationEvent)
+        #sync_table(PolicyAssociation)
+        #sync_table(Domain)
+        #sync_table(DomainGSIName)
+        #sync_table(Project)
+        #sync_table(ProjectGSINameDomainId)
+        ##sync_table(IDMapping)
+        ##sync_table(IDMappingGSI)
+        #sync_table(User)
+        #sync_table(DomainIdUserNameToUserId)
+        #sync_table(Group)
+        #sync_table(DomainIdGroupNameToGroupId)
+        #sync_table(UserGroups)
+        #sync_table(GroupMembership)
+        #sync_table(RoleModel)
+        #sync_table(RoleAssignment)
+
 
         return pid
 

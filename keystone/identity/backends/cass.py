@@ -37,6 +37,7 @@ class User(cass.ExtrasModel):
     enabled = columns.Boolean()
     extra = columns.Text()
     default_project_id = columns.Text(max_length=64)
+    print 'user table initialized ============================================'
 
 ## GSI of 'user' table, with domain_id as the partition key
 ## and user_id as the clustering column. This table is for query
@@ -82,14 +83,14 @@ class GroupMembership(cass.ExtrasModel):
     group_id = columns.Text(primary_key=True, max_length=64)
     user_id = columns.Text(primary_key=True, clustering_order="DESC", max_length=64)
 
-cass.connect_to_cluster()
+#cass.connect_to_cluster()
 
-sync_table(User)
-sync_table(DomainIdUserNameToUserId)
-sync_table(Group)
-sync_table(DomainIdGroupNameToGroupId)
-sync_table(UserGroups)
-sync_table(GroupMembership)
+#sync_table(User)
+#sync_table(DomainIdUserNameToUserId)
+#sync_table(Group)
+#sync_table(DomainIdGroupNameToGroupId)
+#sync_table(UserGroups)
+#sync_table(GroupMembership)
 
 class Identity(identity.Driver):
     # NOTE(henry-nash): Override the __init__() method so as to take a
@@ -182,6 +183,8 @@ class Identity(identity.Driver):
 
     def get_user_by_name(self, user_name, domain_id):
         results = DomainIdUserNameToUserId.objects.filter(domain_id=domain_id, name=user_name)
+        #import pdb;pdb.set_trace()
+        #results.all()
         uuid_ref = results.first()
         if uuid_ref is None:
             raise exception.UserNotFound(user_id=user_name)

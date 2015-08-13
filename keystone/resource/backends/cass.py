@@ -63,12 +63,12 @@ class ProjectGSINameDomainId(cass.ExtrasModel):
     domain_id = columns.Text(primary_key=True, partition_key=True, max_length=64)
     project_id = columns.Text(max_length=64)
 
-cass.connect_to_cluster()
+#cass.connect_to_cluster()
 
-sync_table(Domain)
-sync_table(DomainGSIName)
-sync_table(Project)
-sync_table(ProjectGSINameDomainId)
+#sync_table(Domain)
+#sync_table(DomainGSIName)
+#sync_table(Project)
+#sync_table(ProjectGSINameDomainId)
 
 class Resource(keystone_resource.Driver):
 

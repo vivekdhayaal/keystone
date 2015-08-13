@@ -62,10 +62,10 @@ class IDMappingGSI(cass.ExtrasModel):
     entity_type = columns.Text(primary_key=True, partition_key=True, max_length=64)
     public_id = columns.Text(max_length=64)
 
-cass.connect_to_cluster()
+#cass.connect_to_cluster()
 
-sync_table(IDMapping)
-sync_table(IDMappingGSI)
+#sync_table(IDMapping)
+#sync_table(IDMappingGSI)
 
 @dependency.requires('id_generator_api')
 class Mapping(identity.MappingDriver):

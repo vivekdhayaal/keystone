@@ -429,5 +429,5 @@ class RoleAssignment(cass.ExtrasModel):
     role_id = columns.Text(primary_key=True, index=True, max_length=64)
     inherited = columns.Boolean(default=False, required=True, index=True)
 
-cass.connect_to_cluster()
-sync_table(RoleAssignment)
+#cass.connect_to_cluster()
+#sync_table(RoleAssignment)

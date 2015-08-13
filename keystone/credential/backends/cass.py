@@ -29,9 +29,9 @@ class CredentialModel(cass.ExtrasModel):
     type = columns.Text(max_length=255)
     extra = columns.Text(default='')
 
-cass.connect_to_cluster()
+#cass.connect_to_cluster()
 
-sync_table(CredentialModel)
+#sync_table(CredentialModel)
 
 
 class Credential(credential.Driver):

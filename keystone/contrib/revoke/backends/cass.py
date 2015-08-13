@@ -47,9 +47,9 @@ class RevocationEvent(cass.ExtrasModel):
     audit_id = columns.Text(max_length=32)
     audit_chain_id = columns.Text(max_length=32)
 
-cass.connect_to_cluster()
+#cass.connect_to_cluster()
 
-sync_table(RevocationEvent)
+#sync_table(RevocationEvent)
 
 class Revoke(revoke.Driver):
     def list_events(self, last_fetch=None):
